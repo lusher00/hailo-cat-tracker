@@ -1,0 +1,1139 @@
+[2026-02-19 17:56:16.055] [20469] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:56:16.068] [20469] [HailoRT] [info] [device.cpp:51] [Device] OS Version: Linux 6.8.0-1047-raspi #51-Ubuntu SMP PREEMPT_DYNAMIC Fri Jan 23 17:31:55 UTC 2026 aarch64
+[2026-02-19 17:56:16.068] [20469] [HailoRT] [info] [control.cpp:113] [control__parse_identify_results] firmware_version is: 4.23.0
+[2026-02-19 17:56:16.068] [20469] [HailoRT] [info] [vdevice.cpp:682] [create] VDevice Infos: 0000:01:00.0
+[2026-02-19 17:56:16.077] [20469] [HailoRT] [info] [internal_buffer_manager.cpp:77] [print_execution_results] Planned internal buffer memory: CMA=0 CMA-Desc=655360 Pinned=2870784. memory to edge layer usage factor is 0.82334805
+[2026-02-19 17:56:16.077] [20469] [HailoRT] [info] [internal_buffer_manager.cpp:86] [print_execution_results] Default Internal buffer planner executed successfully
+[2026-02-19 17:56:16.160] [20469] [HailoRT] [info] [device_internal.cpp:57] [configure] Configuring HEF took 92.144782 milliseconds
+[2026-02-19 17:56:16.161] [20469] [HailoRT] [info] [vdevice.cpp:780] [configure] Configuring HEF on VDevice took 92.493282 milliseconds
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 3.753189 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 3.796781 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [edge_elements.cpp:52] [create] Created (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800)
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [queue_elements.cpp:284] [create] Created (PushQEl0yolov8s/input_layer1 | timeout: 10s)
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [filter_elements.cpp:101] [create] Created (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3))
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [vstream.cpp:754] [InputVStreamImpl] Creating yolov8s/input_layer1...
+[2026-02-19 17:56:29.368] [20481] [HailoRT] [info] [vstream_builder.cpp:102] [create_inputs] Input pipeline 'yolov8s/input_layer1': (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3)) >> (PushQEl0yolov8s/input_layer1 | timeout: 10s) >> (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800) >> HW
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [multi_io_elements.cpp:135] [create] Created (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv41_97 | timeout: 10s)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms15yolov8s/conv42_97 | timeout: 10s)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms3yolov8s/conv52_97 | timeout: 10s)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms5yolov8s/conv53_97 | timeout: 10s)
+[2026-02-19 17:56:29.369] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720)
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms1yolov8s/conv62_97 | timeout: 10s)
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400)
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv63_97 | timeout: 10s)
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [queue_elements.cpp:800] [create] Created (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [vstream.cpp:1114] [OutputVStreamImpl] Creating yolov8s/yolov8_nms_postprocess...
+[2026-02-19 17:56:29.370] [20481] [HailoRT] [info] [vstream_builder.cpp:622] [create_output_post_process_nms] Output pipeline 'yolov8s/yolov8_nms_postprocess': HW >> (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600) >> (PullQEl_nms0yolov8s/conv41_97) >> (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000) >> (PullQEl_nms15yolov8s/conv42_97) >> (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400) >> (PullQEl_nms3yolov8s/conv52_97) >> (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000) >> (PullQEl_nms5yolov8s/conv53_97) >> (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720) >> (PullQEl_nms1yolov8s/conv62_97) >> (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400) >> (PullQEl_nms0yolov8s/conv63_97) >> (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640) >> (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
+[2026-02-19 17:57:15.827] [1269] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:15.833] [1269] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:15.855] [1269] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.900] [1464] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:22.900] [1464] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:22.901] [1464] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.086] [1832] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:29.087] [1832] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.090] [1835] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:35.091] [1835] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:42.002] [1839] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:47.992] [1842] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:57:53.993] [1846] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.000] [1858] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:00.001] [1858] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.007] [1861] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:06.008] [1861] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.003] [1864] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:12.004] [1864] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.017] [1867] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:18.018] [1867] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.013] [1870] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.014] [1870] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.014] [1870] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:24.014] [1870] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.011] [1876] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:30.012] [1876] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.001] [1879] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:36.002] [1879] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.995] [1882] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.996] [1882] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:41.996] [1882] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:47.998] [1885] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.998] [1888] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:53.998] [1888] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:53.999] [1888] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.995] [1891] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:58:59.996] [1891] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.016] [1894] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:06.017] [1894] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.006] [1897] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:12.007] [1897] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.002] [1901] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:18.003] [1901] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.000] [1904] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:24.001] [1904] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.005] [1907] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:30.006] [1907] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.003] [1910] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:36.004] [1910] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:42.007] [1913] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.018] [1916] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:48.019] [1916] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 17:59:53.999] [1919] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:00.058] [2112] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:06.021] [2122] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:12.002] [2129] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.003] [2132] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:18.004] [2132] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:24.005] [2135] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.013] [2138] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:30.014] [2138] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.010] [2141] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:36.011] [2141] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.010] [2144] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:42.011] [2144] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.005] [2147] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:48.006] [2147] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.005] [2150] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:00:54.006] [2150] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:00.016] [2153] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.005] [2156] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:06.006] [2156] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:12.002] [2159] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.000] [2162] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:18.000] [2162] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:18.001] [2162] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:24.005] [2165] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.002] [2168] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:30.003] [2168] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.007] [2171] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:36.007] [2171] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:36.008] [2171] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.008] [2174] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.009] [2174] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.009] [2174] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:42.009] [2174] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.004] [2177] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:48.005] [2177] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:01:54.003] [2180] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.014] [2187] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:00.014] [2187] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:00.015] [2187] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.014] [2192] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:06.015] [2192] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:12.006] [2197] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:18.028] [2200] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.029] [2207] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:24.030] [2207] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:30.021] [2222] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.013] [2227] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:36.014] [2227] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.072] [2233] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:42.073] [2233] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.033] [2236] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:48.034] [2236] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.065] [2239] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:02:54.065] [2239] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:02:54.066] [2239] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.035] [2248] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:00.036] [2248] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.032] [2252] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:06.032] [2252] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:06.033] [2252] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:12.025] [2255] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.030] [2258] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:18.031] [2258] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.021] [2261] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:24.022] [2261] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.433] [2634] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:30.434] [2634] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:30.865] [2634] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.996] [2644] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:36.997] [2644] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.457] [2659] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.458] [2659] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.459] [2659] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:43.459] [2659] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.353] [2676] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:50.354] [2676] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:03:56.497] [2684] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:04:02.496] [2690] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:04:02.514] [2690] [HailoRT] [info] [device.cpp:51] [Device] OS Version: Linux 6.8.0-1047-raspi #51-Ubuntu SMP PREEMPT_DYNAMIC Fri Jan 23 17:31:55 UTC 2026 aarch64
+[2026-02-19 18:04:02.517] [2690] [HailoRT] [info] [control.cpp:113] [control__parse_identify_results] firmware_version is: 4.23.0
+[2026-02-19 18:04:02.517] [2690] [HailoRT] [info] [vdevice.cpp:682] [create] VDevice Infos: 0000:01:00.0
+[2026-02-19 18:04:02.529] [2690] [HailoRT] [info] [internal_buffer_manager.cpp:77] [print_execution_results] Planned internal buffer memory: CMA=0 CMA-Desc=655360 Pinned=2870784. memory to edge layer usage factor is 0.82334805
+[2026-02-19 18:04:02.529] [2690] [HailoRT] [info] [internal_buffer_manager.cpp:86] [print_execution_results] Default Internal buffer planner executed successfully
+[2026-02-19 18:04:02.616] [2690] [HailoRT] [info] [device_internal.cpp:57] [configure] Configuring HEF took 98.505901 milliseconds
+[2026-02-19 18:04:02.616] [2690] [HailoRT] [info] [vdevice.cpp:780] [configure] Configuring HEF on VDevice took 99.28739 milliseconds
+[2026-02-19 18:04:22.669] [2701] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:04:22.681] [2701] [HailoRT] [info] [device.cpp:51] [Device] OS Version: Linux 6.8.0-1047-raspi #51-Ubuntu SMP PREEMPT_DYNAMIC Fri Jan 23 17:31:55 UTC 2026 aarch64
+[2026-02-19 18:04:22.682] [2701] [HailoRT] [info] [control.cpp:113] [control__parse_identify_results] firmware_version is: 4.23.0
+[2026-02-19 18:04:22.682] [2701] [HailoRT] [info] [vdevice.cpp:682] [create] VDevice Infos: 0000:01:00.0
+[2026-02-19 18:04:22.691] [2701] [HailoRT] [info] [internal_buffer_manager.cpp:77] [print_execution_results] Planned internal buffer memory: CMA=0 CMA-Desc=655360 Pinned=2870784. memory to edge layer usage factor is 0.82334805
+[2026-02-19 18:04:22.691] [2701] [HailoRT] [info] [internal_buffer_manager.cpp:86] [print_execution_results] Default Internal buffer planner executed successfully
+[2026-02-19 18:04:22.776] [2701] [HailoRT] [info] [device_internal.cpp:57] [configure] Configuring HEF took 93.978442 milliseconds
+[2026-02-19 18:04:22.776] [2701] [HailoRT] [info] [vdevice.cpp:780] [configure] Configuring HEF on VDevice took 94.345715 milliseconds
+[2026-02-19 18:04:47.915] [2714] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 4.478001 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 18:04:47.915] [2714] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 4.517427 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 18:04:47.929] [2714] [HailoRT] [info] [edge_elements.cpp:52] [create] Created (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800)
+[2026-02-19 18:04:47.930] [2714] [HailoRT] [info] [queue_elements.cpp:284] [create] Created (PushQEl0yolov8s/input_layer1 | timeout: 10s)
+[2026-02-19 18:04:47.932] [2714] [HailoRT] [info] [filter_elements.cpp:101] [create] Created (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3))
+[2026-02-19 18:04:47.932] [2714] [HailoRT] [info] [vstream.cpp:754] [InputVStreamImpl] Creating yolov8s/input_layer1...
+[2026-02-19 18:04:47.932] [2714] [HailoRT] [info] [vstream_builder.cpp:102] [create_inputs] Input pipeline 'yolov8s/input_layer1': (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3)) >> (PushQEl0yolov8s/input_layer1 | timeout: 10s) >> (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800) >> HW
+[2026-02-19 18:04:47.936] [2714] [HailoRT] [info] [multi_io_elements.cpp:135] [create] Created (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640)
+[2026-02-19 18:04:47.936] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600)
+[2026-02-19 18:04:47.936] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv41_97 | timeout: 10s)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms15yolov8s/conv42_97 | timeout: 10s)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms3yolov8s/conv52_97 | timeout: 10s)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms5yolov8s/conv53_97 | timeout: 10s)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms1yolov8s/conv62_97 | timeout: 10s)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400)
+[2026-02-19 18:04:47.937] [2714] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv63_97 | timeout: 10s)
+[2026-02-19 18:04:47.938] [2714] [HailoRT] [info] [queue_elements.cpp:800] [create] Created (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
+[2026-02-19 18:04:47.938] [2714] [HailoRT] [info] [vstream.cpp:1114] [OutputVStreamImpl] Creating yolov8s/yolov8_nms_postprocess...
+[2026-02-19 18:04:47.938] [2714] [HailoRT] [info] [vstream_builder.cpp:622] [create_output_post_process_nms] Output pipeline 'yolov8s/yolov8_nms_postprocess': HW >> (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600) >> (PullQEl_nms0yolov8s/conv41_97) >> (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000) >> (PullQEl_nms15yolov8s/conv42_97) >> (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400) >> (PullQEl_nms3yolov8s/conv52_97) >> (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000) >> (PullQEl_nms5yolov8s/conv53_97) >> (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720) >> (PullQEl_nms1yolov8s/conv62_97) >> (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400) >> (PullQEl_nms0yolov8s/conv63_97) >> (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640) >> (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
+[2026-02-19 18:07:40.856] [1286] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:07:40.861] [1286] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:40.881] [1286] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:47.930] [1337] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:07:54.458] [1680] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:00.624] [1855] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:07.803] [1859] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.930] [1865] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:13.931] [1865] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.925] [1868] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:19.926] [1868] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:25.937] [1871] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.936] [1880] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:31.936] [1880] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:31.937] [1880] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.963] [1883] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:37.963] [1883] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:37.963] [1883] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:37.964] [1883] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:43.928] [1886] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.937] [1889] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:49.938] [1889] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:08:55.932] [1895] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:01.931] [1898] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:07.966] [1901] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.936] [1904] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:13.937] [1904] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.053] [2074] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.054] [2074] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:20.054] [2074] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.187] [2175] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:26.188] [2175] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:32.182] [2178] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:38.187] [2185] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.191] [2188] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:44.192] [2188] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.185] [2191] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:50.186] [2191] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:09:56.186] [2194] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.193] [2198] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:02.193] [2198] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:02.194] [2198] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.187] [2203] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:08.187] [2203] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:08.187] [2203] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.187] [2203] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.187] [2203] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.188] [2203] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.188] [2203] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.188] [2203] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.188] [2203] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:08.188] [2203] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.188] [2207] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:14.189] [2207] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.181] [2210] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:20.182] [2210] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.190] [2213] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:26.191] [2213] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.188] [2216] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.189] [2216] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.189] [2216] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.189] [2216] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:32.189] [2216] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:38.188] [2221] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:44.189] [2224] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.181] [2227] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:50.182] [2227] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:10:56.184] [2230] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.184] [2233] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:02.185] [2233] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.185] [2236] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:08.186] [2236] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.189] [2239] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [driver_os_specific.cpp:34] [open_device_file] CHECK failed - Failed to open device file /dev/hailo0 with error 13
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [hailort_driver.cpp:148] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [pcie_device.cpp:87] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [device.cpp:130] [create_pcie] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [vdevice.cpp:837] [create_devices] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [vdevice.cpp:662] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [shared_resource_manager.hpp:81] [register_resource] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [vdevice.cpp:133] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:14.190] [2239] [HailoRT] [error] [vdevice.cpp:567] [create] CHECK_SUCCESS failed with status=HAILO_DRIVER_OPERATION_FAILED(36)
+[2026-02-19 18:11:20.184] [2450] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:11:20.202] [2450] [HailoRT] [info] [device.cpp:51] [Device] OS Version: Linux 6.8.0-1047-raspi #51-Ubuntu SMP PREEMPT_DYNAMIC Fri Jan 23 17:31:55 UTC 2026 aarch64
+[2026-02-19 18:11:20.205] [2450] [HailoRT] [info] [control.cpp:113] [control__parse_identify_results] firmware_version is: 4.23.0
+[2026-02-19 18:11:20.205] [2450] [HailoRT] [info] [vdevice.cpp:682] [create] VDevice Infos: 0000:01:00.0
+[2026-02-19 18:11:20.217] [2450] [HailoRT] [info] [internal_buffer_manager.cpp:77] [print_execution_results] Planned internal buffer memory: CMA=0 CMA-Desc=655360 Pinned=2870784. memory to edge layer usage factor is 0.82334805
+[2026-02-19 18:11:20.217] [2450] [HailoRT] [info] [internal_buffer_manager.cpp:86] [print_execution_results] Default Internal buffer planner executed successfully
+[2026-02-19 18:11:20.308] [2450] [HailoRT] [info] [device_internal.cpp:57] [configure] Configuring HEF took 102.380607 milliseconds
+[2026-02-19 18:11:20.308] [2450] [HailoRT] [info] [vdevice.cpp:780] [configure] Configuring HEF on VDevice took 103.161106 milliseconds
+[2026-02-19 18:12:57.872] [1273] [HailoRT] [info] [vdevice.cpp:535] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: NONE, multi_process_service: false
+[2026-02-19 18:12:57.894] [1273] [HailoRT] [info] [device.cpp:51] [Device] OS Version: Linux 6.8.0-1047-raspi #51-Ubuntu SMP PREEMPT_DYNAMIC Fri Jan 23 17:31:55 UTC 2026 aarch64
+[2026-02-19 18:12:57.896] [1273] [HailoRT] [info] [control.cpp:113] [control__parse_identify_results] firmware_version is: 4.23.0
+[2026-02-19 18:12:57.896] [1273] [HailoRT] [info] [vdevice.cpp:682] [create] VDevice Infos: 0000:01:00.0
+[2026-02-19 18:12:57.909] [1273] [HailoRT] [info] [internal_buffer_manager.cpp:77] [print_execution_results] Planned internal buffer memory: CMA=0 CMA-Desc=655360 Pinned=2870784. memory to edge layer usage factor is 0.82334805
+[2026-02-19 18:12:57.909] [1273] [HailoRT] [info] [internal_buffer_manager.cpp:86] [print_execution_results] Default Internal buffer planner executed successfully
+[2026-02-19 18:12:57.998] [1273] [HailoRT] [info] [device_internal.cpp:57] [configure] Configuring HEF took 100.765593 milliseconds
+[2026-02-19 18:12:57.998] [1273] [HailoRT] [info] [vdevice.cpp:780] [configure] Configuring HEF on VDevice took 101.54163 milliseconds
+[2026-02-19 18:13:13.518] [2030] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 4.357185 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 18:13:13.518] [2030] [HailoRT] [info] [core_op.cpp:156] [activate] Activating yolov8s took 4.393334 milliseconds. Note that the function is asynchronous and thus the network is not fully activated yet.
+[2026-02-19 18:13:13.532] [2030] [HailoRT] [info] [edge_elements.cpp:52] [create] Created (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800)
+[2026-02-19 18:13:13.534] [2030] [HailoRT] [info] [queue_elements.cpp:284] [create] Created (PushQEl0yolov8s/input_layer1 | timeout: 10s)
+[2026-02-19 18:13:13.536] [2030] [HailoRT] [info] [filter_elements.cpp:101] [create] Created (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3))
+[2026-02-19 18:13:13.536] [2030] [HailoRT] [info] [vstream.cpp:754] [InputVStreamImpl] Creating yolov8s/input_layer1...
+[2026-02-19 18:13:13.536] [2030] [HailoRT] [info] [vstream_builder.cpp:102] [create_inputs] Input pipeline 'yolov8s/input_layer1': (PreInferEl0yolov8s/input_layer1 | Reorder - src_order: NHWC, src_shape: (640, 640, 3), dst_order: NHCW, dst_shape: (640, 640, 3)) >> (PushQEl0yolov8s/input_layer1 | timeout: 10s) >> (HwWriteEl0yolov8s/input_layer1 | hw_frame_size: 1228800) >> HW
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [multi_io_elements.cpp:135] [create] Created (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv41_97 | timeout: 10s)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms15yolov8s/conv42_97 | timeout: 10s)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms3yolov8s/conv52_97 | timeout: 10s)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms5yolov8s/conv53_97 | timeout: 10s)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms1yolov8s/conv62_97 | timeout: 10s)
+[2026-02-19 18:13:13.540] [2030] [HailoRT] [info] [edge_elements.cpp:287] [create] Created (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400)
+[2026-02-19 18:13:13.541] [2030] [HailoRT] [info] [queue_elements.cpp:657] [create] Created (PullQEl_nms0yolov8s/conv63_97 | timeout: 10s)
+[2026-02-19 18:13:13.541] [2030] [HailoRT] [info] [queue_elements.cpp:800] [create] Created (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
+[2026-02-19 18:13:13.541] [2030] [HailoRT] [info] [vstream.cpp:1114] [OutputVStreamImpl] Creating yolov8s/yolov8_nms_postprocess...
+[2026-02-19 18:13:13.541] [2030] [HailoRT] [info] [vstream_builder.cpp:622] [create_output_post_process_nms] Output pipeline 'yolov8s/yolov8_nms_postprocess': HW >> (HwReadEl0yolov8s/conv41_97 | hw_frame_size: 409600) >> (PullQEl_nms0yolov8s/conv41_97) >> (HwReadEl15yolov8s/conv42_97 | hw_frame_size: 512000) >> (PullQEl_nms15yolov8s/conv42_97) >> (HwReadEl3yolov8s/conv52_97 | hw_frame_size: 102400) >> (PullQEl_nms3yolov8s/conv52_97) >> (HwReadEl5yolov8s/conv53_97 | hw_frame_size: 128000) >> (PullQEl_nms5yolov8s/conv53_97) >> (HwReadEl1yolov8s/conv62_97 | hw_frame_size: 30720) >> (PullQEl_nms1yolov8s/conv62_97) >> (HwReadEl0yolov8s/conv63_97 | hw_frame_size: 38400) >> (PullQEl_nms0yolov8s/conv63_97) >> (NmsPPMuxEl0YOLOV8-Post-Process | Op YOLOV8, Name: YOLOV8-Post-Process, Score threshold: 0.200, IoU threshold: 0.70, Classes: 80, Max bboxes per class: 100, Image height: 640, Image width: 640) >> (UserBufQEl_post_infer0yolov8s/yolov8_nms_postprocess | timeout: 10s)
