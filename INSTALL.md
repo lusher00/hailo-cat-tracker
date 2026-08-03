@@ -97,11 +97,46 @@ Removes the service. Deliberately keeps the udev rule (other Hailo apps may want
 sudo journalctl -u hailo-tracker -n 50
 ```
 
+**`HAILO_OUT_OF_PHYSICAL_DEVICES` (error 74)**
+
+The message says "requested: 1, found: 0". That's a count of *free* devices, so it covers two unrelated causes. Split them first:
+
+```bash
+ls -l /dev/hailo0
+```
+
+*Missing* → the driver isn't loaded. On Ubuntu this is nearly always a kernel update that outran the out-of-tree module:
+
+```bash
+uname -r
+find /lib/modules -name 'hailo_pci*'      # built for which kernel?
+sudo apt install -y linux-headers-$(uname -r)
+sudo dkms autoinstall -k $(uname -r)
+sudo modprobe hailo_pci
+```
+
+*Present* → another process holds it. Only one can:
+
+```bash
+sudo fuser -v /dev/hailo0
+systemctl is-active hailo-cat-tracker
+```
+
+Kill whatever it reports, or stop and **disable** the competing service — if both are enabled they race at boot and the loser fails in a way that looks intermittent.
+
+A useful non-signal: `sudo hailortcli fw-control identify` works even when another process owns the device, because it opens it only momentarily. Passing that check does not mean the device is free.
+
 **Permission denied on /dev/hailo0**
 
 ```bash
 ls -l /dev/hailo0     # want crw-rw-rw-
 sudo rmmod hailo_pci && sudo modprobe hailo_pci
+```
+
+If the node was recreated by something other than a normal boot — a DKMS rebuild, say — the udev rule may not have fired:
+
+```bash
+sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
 **`ModuleNotFoundError: No module named 'hailo_platform'`**

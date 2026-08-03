@@ -167,6 +167,33 @@ dmesg | grep -i hailo
 
 You want to see the driver load. It will complain about missing firmware until the next step.
 
+### Register it with DKMS — don't skip this
+
+This driver is out-of-tree. A plain `make install` binds it to the kernel you built it against, and the next `apt upgrade` that brings a new kernel will silently leave you without it. The symptom is unhelpful: `/dev/hailo0` vanishes and HailoRT reports `HAILO_OUT_OF_PHYSICAL_DEVICES` rather than anything about a missing module.
+
+The repo ships a `dkms.conf`, so register it:
+
+```bash
+cd ~/hailo/hailort-drivers/linux/pcie
+sudo dkms add .
+sudo dkms install hailo_pci/${HAILORT_VERSION}
+dkms status
+```
+
+`dkms status` should list `hailo_pci` against your current kernel. DKMS will then rebuild it automatically on every kernel update, provided the matching headers are installed — so also:
+
+```bash
+sudo apt install -y linux-headers-generic
+```
+
+If you ever land on a kernel without the module anyway:
+
+```bash
+sudo apt install -y linux-headers-$(uname -r)
+sudo dkms autoinstall -k $(uname -r)
+sudo modprobe hailo_pci
+```
+
 ## 6. Install firmware
 
 The firmware version must match HailoRT exactly.

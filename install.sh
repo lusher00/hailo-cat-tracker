@@ -76,6 +76,7 @@ if [ ! -f "${CONF_FILE}" ]; then
 
 # ---------- server ----------
 #HTTP_PORT=8080
+#HTTP_HOST=0.0.0.0          # 127.0.0.1 to expose only to the Pi itself
 
 # ---------- detection ----------
 #CONF_THRESH=0.40
@@ -126,8 +127,10 @@ if [ ! -f "${CONF_FILE}" ]; then
 
 # ---------- events / snapshots / webhook ----------
 #EVENT_LOG=true
+#EVENT_DB=/home/pi/hailo-tracker/events.db
 #EVENT_RETENTION_DAYS=30
 #SNAPSHOT_ON_DETECT=false
+#SNAPSHOT_DIR=/home/pi/hailo-tracker/snapshots
 #SNAPSHOT_MAX_FILES=500
 #SNAPSHOT_COOLDOWN=30
 #WEBHOOK_URL=http://homeassistant.local:8123/api/webhook/hailo

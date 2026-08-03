@@ -67,6 +67,22 @@ python3 hailo_tracker.py --snapshots --webhook http://ha.local/api/webhook/cat
 python3 hailo_tracker.py --list-classes
 ```
 
+Full flag list:
+
+| Flag | Effect |
+|------|--------|
+| `--port N` | HTTP port |
+| `--classes a,b` | Class filter |
+| `--conf 0.6` | Confidence threshold |
+| `--model path.hef` | Use a specific model |
+| `--rotate 0\|90\|180\|270` | Camera rotation |
+| `--width` / `--height` / `--fps` | Camera capture settings |
+| `--no-track` | Per-frame detection only, no IDs |
+| `--no-events` | Don't write to the event log |
+| `--snapshots` | Save a JPEG per new detection |
+| `--webhook URL` | POST detections to URL |
+| `--list-classes` | Print all 80 classes with IDs and exit |
+
 ## Configuration
 
 Three ways in, highest priority first: **CLI flag → environment variable → default in `hailo_tracker.py`**.
@@ -143,9 +159,11 @@ Coordinates are normalised 0–1, so they survive a resolution change. A detecti
 | `/events/summary` | Per-class visit counts and total time in frame |
 | `/events.csv` | Full event log as CSV |
 | `/snapshots` | Saved snapshot filenames |
+| `/snapshots/<name>` | A specific saved snapshot |
 | `/metrics` | Prometheus exposition format |
 | `/healthz` | 200 if a frame arrived in the last 10s, else 503 |
 | `/api/config` | GET current settings; POST to change them live |
+| `/api/snapshot` | POST to save the current frame to disk on demand |
 
 ```bash
 curl -s http://<pi-ip>:8080/stats | python3 -m json.tool
@@ -225,6 +243,10 @@ FramePublisher ──┬── browser 1
 
 Capture and render are separate threads with a depth-2 queue between them, so a slow client or a busy encode can't back-pressure the NPU. The render thread encodes each frame exactly once no matter how many clients are watching.
 
+**Latency is bounded, throughput is not.** `rpicam-vid` never stops producing. If decode plus inference can't keep up with the camera — even briefly — the capture loop discards every buffered frame except the newest before decoding. Falling behind therefore costs you frames, never delay. The alternative (processing every frame in order) means a backlog that grows without limit: at 30fps captured and 20fps processed you accumulate ten frames a second, and after two minutes you're watching twenty-second-old video.
+
+`dropped` in `/stats` counts these. A steady non-zero number is normal and healthy; it means the camera is outrunning the NPU and you're seeing live video rather than a queue. Set `CAM_FRAMERATE` to whatever you actually sustain if you'd rather not waste the encode.
+
 ## Files
 
 | File | Purpose |
@@ -235,7 +257,11 @@ Capture and render are separate threads with a depth-2 queue between them, so a 
 | `webui.py` | The browser UI (single self-contained page) |
 | `install.sh` / `uninstall.sh` | systemd service, udev rule, env file |
 | `download_model.sh` | Fetches the `.hef` |
+| `hailo-tracker.env` | Your settings — created by `install.sh`, gitignored |
+| `events.db` | SQLite event log — created on first run, gitignored |
+| `snapshots/` | Saved detection frames, if enabled |
 | `tests/` | Off-device test harness |
+| `doc/` | Diagrams |
 
 ## Testing
 
@@ -259,13 +285,56 @@ sudo systemctl restart hailo-tracker
 
 ## Troubleshooting
 
+**`HAILO_OUT_OF_PHYSICAL_DEVICES` (error 74)** — "not enough free devices, requested: 1, found: 0". The count is of *free* devices, not present ones, so this means one of two different things. Check which:
+
+```bash
+ls -l /dev/hailo0
+```
+
+*No such file* — the driver isn't loaded. Usually a kernel update outran the out-of-tree module; see the next entry.
+
+*It exists* — something already has it open. Only one process can hold the NPU:
+
+```bash
+sudo fuser -v /dev/hailo0
+systemctl is-active hailo-cat-tracker    # an older service of your own?
+```
+
+A crashed instance can keep the handle. Kill the PID `fuser` reports and restart. If you have a second Hailo project installed as a service, disable it — both will start at boot and whichever wins locks out the other, which presents as an intermittent failure.
+
+Note that `sudo hailortcli fw-control identify` succeeding does **not** rule this out. It opens the device only briefly, so it works even when a long-lived process holds it.
+
+**Driver missing after a kernel update** — the most common Ubuntu failure. The Hailo PCIe driver is out-of-tree, so a new kernel arrives without it:
+
+```bash
+uname -r
+find /lib/modules -name 'hailo_pci*'
+```
+
+If those disagree, rebuild for the running kernel:
+
+```bash
+sudo apt install -y linux-headers-$(uname -r)
+sudo dkms autoinstall -k $(uname -r)
+sudo modprobe hailo_pci
+```
+
+`dkms status` should list `hailo_pci` for your current kernel. If it doesn't, the driver isn't registered with DKMS and this will break again on the next `apt upgrade` — reinstall it from `hailort-drivers/linux/pcie` so DKMS picks it up.
+
 **`/dev/hailo0` permission denied**
 
 ```bash
 sudo rmmod hailo_pci && sudo modprobe hailo_pci
 ```
 
-`./install.sh` writes a udev rule that fixes this permanently.
+`./install.sh` writes a udev rule that fixes this permanently. If the node is recreated by something else (a DKMS rebuild, for instance) the rule may not fire:
+
+```bash
+sudo udevadm control --reload-rules && sudo udevadm trigger
+ls -l /dev/hailo0      # want crw-rw-rw-
+```
+
+**Video is minutes behind reality** — you're on a build from before the stale-frame fix. The capture loop now discards all but the newest buffered frame. Confirm `dropped` in `/stats` is climbing while `fps` stays steady; that's correct behaviour. See [Architecture](#architecture).
 
 **`hailo_platform` not found** — use the system Python (`/usr/bin/python3`), not a venv. If you built HailoRT from source the bindings land in `/usr/lib/aarch64-linux-gnu/python3.*/site-packages`; the script adds that path automatically.
 
@@ -295,11 +364,15 @@ More detail in [INSTALL.md](INSTALL.md) and [SETUP.md](SETUP.md).
 
 ## Performance
 
-- ~30ms inference per frame on Hailo-8L
-- 25–30 FPS end to end at 720p
+- ~30ms inference per frame on Hailo-8L — this is the floor for yolov8s
+- 20–30 FPS end to end at 720p, depending on scene complexity and JPEG size
 - ~50–100ms latency, camera to browser
 - ~3W NPU power draw
 - Tracker overhead is well under 1ms for typical object counts
+
+Where the time goes, in rough order: NPU inference (~30ms, fixed), JPEG decode on the CPU (scales with capture resolution), annotation (scales with object count), JPEG encode (scales with `JPEG_QUALITY`). `/stats` reports `inference_ms` and `encode_ms` separately; whatever's left over between them and your frame time is decode.
+
+To buy frames back: lower `CAM_WIDTH`/`CAM_HEIGHT` first (decode dominates above 720p), then `JPEG_QUALITY`, then `INFER_EVERY_N` as a last resort — the tracker coasts between inferences, so 2 or 3 is usually invisible for slow-moving subjects.
 
 ## Roadmap
 
