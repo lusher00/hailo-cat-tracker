@@ -624,27 +624,43 @@ def capture_loop():
             buf = b""
 
             while not _shutdown.is_set():
-                chunk = proc.stdout.read(32768)
+                chunk = proc.stdout.read(1 << 20)
                 if not chunk:
                     if proc.poll() is not None:
                         raise RuntimeError(f"rpicam-vid exited {proc.returncode}")
                     continue
                 buf += chunk
 
-                start = buf.find(b"\xff\xd8")
-                if start == -1:
+                # Drain to the NEWEST complete JPEG sitting in the buffer.
+                #
+                # rpicam-vid never stops producing. If decode + inference ever
+                # falls behind 30fps — even briefly — taking the oldest frame
+                # each pass means we render an ever-growing backlog of stale
+                # video and the latency never recovers. Anything older than the
+                # last complete frame is worthless, so throw it away.
+                jpg = None
+                stale = 0
+                while True:
+                    start = buf.find(b"\xff\xd8")
+                    if start == -1:
+                        break
+                    end = buf.find(b"\xff\xd9", start + 2)
+                    if end == -1:
+                        break
+                    if jpg is not None:
+                        stale += 1
+                    jpg = buf[start:end + 2]
+                    buf = buf[end + 2:]
+
+                if jpg is None:
                     if len(buf) > 8 << 20:
-                        buf = b""
-                    continue
-                end = buf.find(b"\xff\xd9", start + 2)
-                if end == -1:
-                    if len(buf) > 8 << 20:
-                        print("[camera] resyncing — no end marker in 8MB")
+                        print("[camera] resyncing — no complete JPEG in 8MB")
                         buf = b""
                     continue
 
-                jpg = buf[start:end + 2]
-                buf = buf[end + 2:]
+                if stale:
+                    with STATS._lock:
+                        STATS.dropped += stale
 
                 frame = cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR)
                 if frame is None:
