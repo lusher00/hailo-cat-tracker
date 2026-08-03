@@ -1,9 +1,14 @@
-# Install via apt, not pip — these need system packages on Pi OS
-# sudo apt install -y python3-opencv python3-flask python3-numpy
+# On Raspberry Pi OS / Ubuntu for Pi, install these via apt — NOT pip.
+# pip's opencv/numpy wheels will shadow the system ones and break hailo_platform.
 #
-# hailo_platform is installed as part of hailo-all:
-# sudo apt install hailo-all
+#   sudo apt install -y python3-opencv python3-flask python3-numpy
+#
+# hailo_platform comes from either:
+#   sudo apt install hailo-all              (Raspberry Pi OS)
+#   the HailoRT source build                (Ubuntu — see SETUP.md)
+#
+# This file exists for reference / non-Pi development environments only.
 
-flask
-opencv-python
-numpy
+flask>=2.0
+opencv-python>=4.5
+numpy>=1.21

@@ -12,21 +12,40 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-USER=$(whoami)
+RUN_USER=$(whoami)
 
 echo "Install directory: ${INSTALL_DIR}"
-echo "User: ${USER}"
+echo "User: ${RUN_USER}"
 
+# ------------------------------------------------------------
+# Preflight
+# ------------------------------------------------------------
+if ! command -v rpicam-vid >/dev/null 2>&1; then
+    echo "Warning: rpicam-vid not found. Install with: sudo apt install -y rpicam-apps"
+fi
+
+if ! /usr/bin/python3 -c "import hailo_platform" >/dev/null 2>&1; then
+    echo "Warning: hailo_platform not importable by /usr/bin/python3."
+    echo "         See SETUP.md — you need either 'sudo apt install hailo-all' (Pi OS)"
+    echo "         or the HailoRT source build (Ubuntu)."
+fi
+
+if ! ls "${INSTALL_DIR}"/*.hef >/dev/null 2>&1 && \
+   ! ls /usr/share/hailo-models/*.hef >/dev/null 2>&1; then
+    echo "Warning: no .hef model found. Run ./download_model.sh first."
+fi
+
+# ------------------------------------------------------------
 # udev rule so /dev/hailo0 is accessible without sudo
+# ------------------------------------------------------------
 echo "Setting up udev rule for /dev/hailo0..."
-sudo tee /etc/udev/rules.d/99-hailo.rules > /dev/null << UDEV
+sudo tee /etc/udev/rules.d/99-hailo.rules > /dev/null << 'UDEV'
 KERNEL=="hailo*", MODE="0666"
 UDEV
 
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
-# Reload driver to apply permissions immediately
 if lsmod | grep -q hailo_pci; then
     echo "Reloading Hailo PCIe driver..."
     sudo rmmod hailo_pci
@@ -42,20 +61,108 @@ else
     echo "Warning: /dev/hailo0 not found — is the Hailo kit connected?"
 fi
 
+# ------------------------------------------------------------
+# Config file — edit this instead of the .py to retune
+# ------------------------------------------------------------
+CONF_FILE="${INSTALL_DIR}/hailo-tracker.env"
+if [ ! -f "${CONF_FILE}" ]; then
+    echo "Creating ${CONF_FILE}..."
+    cat > "${CONF_FILE}" << 'ENVCONF'
+# Every setting here overrides the CONFIG block in hailo_tracker.py.
+# Uncomment, edit, then: sudo systemctl restart hailo-tracker
+#
+# Confidence, class filter and the display toggles are also adjustable live
+# from the web UI without a restart — this file just sets the boot defaults.
+
+# ---------- server ----------
+#HTTP_PORT=8080
+
+# ---------- detection ----------
+#CONF_THRESH=0.40
+# Comma-separated; empty or absent means all 80 COCO classes
+#TRACKED_CLASSES=cat,dog,person
+# Ignore boxes smaller than this fraction of the frame
+#MIN_BOX_AREA_FRAC=0.0005
+# Run the NPU every Nth frame; the tracker coasts between
+#INFER_EVERY_N=1
+
+# ---------- tracking ----------
+#TRACK_ENABLED=true
+#TRACK_IOU=0.30
+#TRACK_MAX_MISSES=15     # frames to coast a lost object (15 = 0.5s at 30fps)
+#TRACK_MIN_HITS=3        # frames before an object counts as real
+#TRAIL_LENGTH=48
+
+# ---------- camera ----------
+#CAM_WIDTH=1280
+#CAM_HEIGHT=720
+#CAM_FRAMERATE=30
+#CAM_AUTOFOCUS=continuous   # continuous | manual | auto
+#CAM_LENS_POSITION=         # dioptres, required if AF is manual (0 = infinity)
+#CAM_SHUTTER=20000          # microseconds; blank = auto exposure
+#CAM_GAIN=2                 # blank = auto
+#CAM_EV=0
+#CAM_DENOISE=off
+#CAM_HFLIP=false
+#CAM_VFLIP=false
+#CAM_EXTRA_ARGS=            # anything else to pass to rpicam-vid
+
+# 0, 90, 180 or 270 degrees clockwise
+#ROTATE_DEGREES=0
+
+# ---------- display ----------
+#JPEG_QUALITY=85
+#SHOW_HUD=true
+#SHOW_LABELS=true
+#SHOW_IDS=true
+#SHOW_TRAILS=false
+#CONFIRMED_ONLY=true
+#STREAM_MAX_FPS=0           # 0 = unthrottled
+
+# ---------- region of interest ----------
+# Normalised polygon. Only detections whose centre falls inside are counted.
+#ROI_POLYGON=[[0.1,0.1],[0.9,0.1],[0.9,0.9],[0.1,0.9]]
+#SHOW_ROI=false
+
+# ---------- events / snapshots / webhook ----------
+#EVENT_LOG=true
+#EVENT_RETENTION_DAYS=30
+#SNAPSHOT_ON_DETECT=false
+#SNAPSHOT_MAX_FILES=500
+#SNAPSHOT_COOLDOWN=30
+#WEBHOOK_URL=http://homeassistant.local:8123/api/webhook/hailo
+#DETECTION_LOG=true
+#DETECTION_LOG_COOLDOWN=10
+
+# ---------- model ----------
+#HEF_PATH=/usr/share/hailo-models/yolov8s_h8l.hef
+#NN_SIZE=640
+#BOX_ORDER=xyxy             # flip to yxyx if boxes look mirrored diagonally
+ENVCONF
+else
+    echo "Keeping existing ${CONF_FILE}"
+fi
+
+# ------------------------------------------------------------
 # systemd service
+# ------------------------------------------------------------
 echo "Creating systemd service..."
 sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null << SERVICE
 [Unit]
 Description=Hailo Tracker — real-time object detection
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=${USER}
+User=${RUN_USER}
 WorkingDirectory=${INSTALL_DIR}
+EnvironmentFile=-${CONF_FILE}
 ExecStart=/usr/bin/python3 ${INSTALL_DIR}/${SCRIPT_NAME}
 Restart=on-failure
 RestartSec=5
+TimeoutStopSec=15
+KillSignal=SIGTERM
 StandardOutput=journal
 StandardError=journal
 
@@ -65,17 +172,18 @@ SERVICE
 
 sudo systemctl daemon-reload
 sudo systemctl enable ${SERVICE_NAME}
-sudo systemctl start ${SERVICE_NAME}
+sudo systemctl restart ${SERVICE_NAME}
 
-sleep 2
+sleep 3
 
 echo ""
 echo "Service status:"
 sudo systemctl status ${SERVICE_NAME} --no-pager || true
 
 echo ""
-echo "Installation complete!"
+echo "Installation complete."
 echo ""
+echo "  Configure:    edit ${CONF_FILE}, then sudo systemctl restart ${SERVICE_NAME}"
 echo "  View logs:    sudo journalctl -u ${SERVICE_NAME} -f"
 echo "  Stop:         sudo systemctl stop ${SERVICE_NAME}"
 echo "  Restart:      sudo systemctl restart ${SERVICE_NAME}"

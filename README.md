@@ -1,60 +1,202 @@
 # Hailo Tracker
 
-Real-time object detection on Raspberry Pi 5 with Hailo-8L NPU. Streams annotated video to a browser over HTTP.
+Real-time object detection and tracking on a Raspberry Pi 5 with a Hailo-8L NPU. Streams annotated video to any browser over HTTP.
 
-Detects all 80 COCO classes by default. Edit `TRACKED_CLASSES` at the top of `hailo_tracker.py` to limit tracking to specific objects.
+Labels every object it sees — all 80 COCO classes, each with its own colour, a confidence score, and a track ID that stays with the object as it moves. Narrow it to just cats, or just people, from the web UI without restarting anything.
+
+![architecture](doc/pipeline.svg)
 
 ## Hardware
 
-- Raspberry Pi 5
-- Hailo-8L AI Kit (M.2 HAT+)
-- Raspberry Pi Camera Module 3 (IMX708)
+- Raspberry Pi 5 (4GB+)
+- Hailo-8L AI Kit — M.2 HAT+ or AI HAT+ (13 TOPS)
+- Raspberry Pi Camera Module (tested on IMX708 / Camera Module 3 and IMX477 / HQ Camera)
 
 ## Features
 
-- 30 FPS real-time inference via Hailo-8L NPU
-- All 80 COCO classes with per-class color coding
-- Configurable class filter — track everything or just what you care about
-- Live MJPEG stream in any browser, no app needed
-- `systemd` service for headless auto-start
+**Detection**
+
+- ~30 FPS real-time inference on the Hailo-8L
+- All 80 COCO classes, per-class colours, cats in green
+- Persistent track IDs — "cat #3 was here for 90 seconds", not 2,700 unrelated frames
+- Motion trails, confidence thresholding, minimum box size filter
+- Region of interest — ignore everything outside a polygon you define
+
+**Interface**
+
+- Live MJPEG stream, no app required
+- Control panel: confidence slider, class picker, display toggles — all applied live
+- One encode shared by every connected client, so a second browser tab costs nothing
+- `/snapshot`, `/stats`, `/tracks`, `/events`, `/metrics`, `/healthz`
+
+**Recording**
+
+- SQLite event log — one row per visit, with duration and peak confidence
+- Auto-snapshot on new detection, with retention limits
+- Webhook POST on detection, for Home Assistant / Node-RED / whatever
+- CSV export
+
+**Operations**
+
+- Self-healing capture loop — a camera hiccup restarts the pipeline with backoff instead of freezing the stream
+- Configuration by env file, CLI flag, or the web UI; no need to edit Python
+- Prometheus metrics endpoint
+- `systemd` service with clean SIGTERM shutdown
+- Off-device test harness so you can check changes on a laptop
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/lusher00/hailo-tracker
 cd hailo-tracker
+./download_model.sh      # fetches yolov8s.hef (~23MB)
 ./install.sh
 ```
 
-Open `http://<pi-ip>:8080` in a browser.
+Open `http://<pi-ip>:8080`.
+
+If HailoRT isn't installed yet, work through [SETUP.md](SETUP.md) first — about 90 minutes on a fresh system, mostly compile time.
+
+## Running by hand
+
+```bash
+python3 hailo_tracker.py                          # everything, all classes
+python3 hailo_tracker.py --classes cat,dog        # pets only
+python3 hailo_tracker.py --conf 0.6 --rotate 90
+python3 hailo_tracker.py --snapshots --webhook http://ha.local/api/webhook/cat
+python3 hailo_tracker.py --list-classes
+```
 
 ## Configuration
 
-Open `hailo_tracker.py` and edit the CONFIG block near the top:
+Three ways in, highest priority first: **CLI flag → environment variable → default in `hailo_tracker.py`**.
 
-```python
-# Track everything (default)
-TRACKED_CLASSES = []
-
-# Or pick specific classes from the 80-class COCO list
-TRACKED_CLASSES = ["cat", "dog", "person"]
-
-# Confidence threshold (0.0 – 1.0)
-CONF_THRESH = 0.40
-
-# Camera rotation
-ROTATE = cv2.ROTATE_90_CLOCKWISE   # or None to disable
-```
-
-After editing, restart the service:
+`install.sh` writes `hailo-tracker.env` next to the script and points the systemd unit at it. Edit that file for anything persistent:
 
 ```bash
+nano hailo-tracker.env
 sudo systemctl restart hailo-tracker
 ```
 
+```bash
+TRACKED_CLASSES=cat,dog,person   # empty = all 80 classes
+CONF_THRESH=0.40
+
+CAM_WIDTH=1280
+CAM_HEIGHT=720
+CAM_FRAMERATE=30
+CAM_AUTOFOCUS=continuous
+CAM_SHUTTER=20000                # microseconds; blank = auto exposure
+CAM_GAIN=2
+
+ROTATE_DEGREES=0                 # 0, 90, 180, 270
+SNAPSHOT_ON_DETECT=true
+WEBHOOK_URL=http://homeassistant.local:8123/api/webhook/hailo
+```
+
+The file installed by `install.sh` lists every available setting with comments. Confidence, the class filter, and the display toggles can also be changed live from the web UI — those changes apply instantly but reset to the file's values on restart.
+
+### Camera notes
+
+The defaults come from a build that was pointed at an actual moving cat:
+
+- **1280x720 rather than 1080p.** The network downsamples to 640x640 regardless, so extra pixels only cost JPEG decode and encode time. Raise it if you want a prettier stream and have CPU to spare.
+- **`CAM_SHUTTER=20000`** (1/50s) with **`CAM_GAIN=2`** pins exposure. Auto-exposure hunts when a subject crosses the frame, and the resulting motion blur costs real detections.
+- **`CAM_AUTOFOCUS=continuous`.** If you set `manual`, you must also set `CAM_LENS_POSITION` (dioptres — `0` is infinity, `2.0` is roughly 50cm). Manual AF with no lens position leaves the lens wherever it was parked, which usually means everything is soft.
+- **`CAM_DENOISE=off`** — it adds latency and the network doesn't care.
+
+Outdoors, where light varies a lot, leave `CAM_SHUTTER` and `CAM_GAIN` blank and let the ISP handle it.
+
+### Tracking
+
+The tracker associates detections across frames by IoU overlap, with constant-velocity prediction to ride out brief occlusions.
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `TRACK_MIN_HITS` | 3 | Frames an object must appear before it counts. Filters the single-frame false positives YOLO throws on textured backgrounds — rugs and blankets love to be "cat". |
+| `TRACK_MAX_MISSES` | 15 | Frames to coast a lost object before dropping it. At 30fps that's half a second, enough to survive a chair leg. |
+| `TRACK_IOU` | 0.30 | Overlap needed to call two boxes the same object. Lower it for fast movers. |
+
+Set `TRACK_ENABLED=false` (or `--no-track`) for plain per-frame detection with no IDs.
+
+### Region of interest
+
+Ignore everything outside a polygon — a food bowl, a doorway, your own garden but not the pavement:
+
+```bash
+ROI_POLYGON=[[0.05,0.4],[0.6,0.35],[0.65,0.95],[0.1,0.95]]
+SHOW_ROI=true
+```
+
+Coordinates are normalised 0–1, so they survive a resolution change. A detection counts only if its centre falls inside.
+
+## Endpoints
+
+| Path | Returns |
+|------|---------|
+| `/` | Web UI — live stream plus control panel |
+| `/video` | MJPEG stream. Drop into Home Assistant, VLC, or an `<img>` tag |
+| `/snapshot` | Latest annotated frame, single JPEG |
+| `/tracks` | JSON array of what's in frame right now, with IDs and boxes |
+| `/stats` | FPS, inference time, frame and drop counts, per-class totals |
+| `/events` | Recent detection events. `?limit=`, `?class=`, `?since=` |
+| `/events/summary` | Per-class visit counts and total time in frame |
+| `/events.csv` | Full event log as CSV |
+| `/snapshots` | Saved snapshot filenames |
+| `/metrics` | Prometheus exposition format |
+| `/healthz` | 200 if a frame arrived in the last 10s, else 503 |
+| `/api/config` | GET current settings; POST to change them live |
+
+```bash
+curl -s http://<pi-ip>:8080/stats | python3 -m json.tool
+curl -s http://<pi-ip>:8080/events/summary | python3 -m json.tool
+curl -o cat.jpg http://<pi-ip>:8080/snapshot
+
+# Switch to cats-only without restarting
+curl -X POST http://<pi-ip>:8080/api/config \
+     -H 'Content-Type: application/json' \
+     -d '{"tracked_classes": ["cat"], "conf_thresh": 0.5}'
+```
+
+### Webhook payload
+
+```json
+{
+  "event": "detection",
+  "timestamp": 1754238401.22,
+  "iso": "2026-08-03T16:26:41",
+  "track": {
+    "id": 7, "class": "cat", "class_id": 15,
+    "box": [822, 440, 1000, 558],
+    "conf": 0.93, "max_conf": 0.94,
+    "hits": 12, "duration_s": 0.4, "confirmed": true
+  }
+}
+```
+
+Fired once when a track is confirmed, not per frame. Delivery is fire-and-forget on a background thread — a dead endpoint can't stall the video.
+
+## Event log
+
+One row per track, not per frame:
+
+```bash
+sqlite3 events.db \
+  "SELECT class, COUNT(*), ROUND(SUM(duration_s)/60,1) AS minutes
+   FROM events GROUP BY class ORDER BY 2 DESC;"
+```
+
+```
+cat|47|182.4
+person|12|31.7
+dog|3|4.2
+```
+
+Rows older than `EVENT_RETENTION_DAYS` (default 30) are pruned hourly.
+
 ## COCO Classes
 
-The full 80-class list is in `hailo_tracker.py`. A few useful ones:
+Full list via `python3 hailo_tracker.py --list-classes`. Common ones:
 
 | Class | ID | Class | ID |
 |-------|----|-------|----|
@@ -63,114 +205,113 @@ The full 80-class list is in `hailo_tracker.py`. A few useful ones:
 | car | 2 | horse | 17 |
 | bird | 14 | bottle | 39 |
 
-## Installation Details
-
-### Prerequisites
-
-The Hailo AI Kit needs the PCIe driver and HailoRT runtime installed. The easiest path on Pi 5 is the official Hailo install script:
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install hailo-all -y
-sudo reboot
-```
-
-Verify the kit is detected after reboot:
-
-```bash
-hailortcli fw-control identify
-```
-
-You should see `Hailo-8L` in the output. If not, check that the M.2 HAT is seated and the PCIe cable is connected.
-
-### Python Dependencies
-
-```bash
-sudo apt install -y python3-opencv python3-flask python3-numpy
-```
-
-The `hailo_platform` Python package is installed as part of `hailo-all` above.
-
-### Model File
-
-The YOLOv8s `.hef` file compiled for Hailo-8L is not included in this repo (it's ~30MB). Download it from the Hailo model zoo:
-
-```bash
-pip install huggingface_hub --break-system-packages
-python3 -c "
-from huggingface_hub import hf_hub_download
-hf_hub_download(
-    repo_id='hailo/Model-Zoo',
-    filename='hailo8l/yolov8s.hef',
-    local_dir='.'
-)
-"
-```
-
-Or find it in `/usr/share/hailo-models/` if `hailo-all` installed it.
-
-### Service Install
-
-```bash
-./install.sh
-```
-
-This sets up a `systemd` service that starts automatically on boot.
-
-**Useful commands:**
-
-```bash
-sudo systemctl status hailo-tracker
-sudo journalctl -u hailo-tracker -f    # live logs
-sudo systemctl restart hailo-tracker
-sudo systemctl stop hailo-tracker
-```
-
-To uninstall:
-
-```bash
-./uninstall.sh
-```
-
 ## Architecture
 
 ```
-Camera (IMX708)
-    ↓ rpicam-vid MJPEG
-Python JPEG decoder
-    ↓ NumPy array
-Letterbox → 640×640
+Camera (IMX708 / IMX477)
+    ↓ rpicam-vid, MJPEG
+capture thread ── JPEG demux → decode → rotate → letterbox 640×640
     ↓
 Hailo-8L NPU (YOLOv8s)
     ↓ [80][N, 5] detections
-Class filter + OpenCV annotation
-    ↓ annotated JPEG
-Flask MJPEG stream → Browser
+parse → ROI filter → IoU tracker (persistent IDs)
+    ↓
+render thread ── annotate → encode once
+    ↓
+FramePublisher ──┬── browser 1
+                 ├── browser 2
+                 └── Home Assistant
 ```
 
-## Performance
+Capture and render are separate threads with a depth-2 queue between them, so a slow client or a busy encode can't back-pressure the NPU. The render thread encodes each frame exactly once no matter how many clients are watching.
 
-- ~30ms inference per frame on Hailo-8L
-- ~50–100ms end-to-end latency (camera to browser)
-- ~3W NPU power draw
+## Files
+
+| File | Purpose |
+|------|---------|
+| `hailo_tracker.py` | Entry point — config, camera, NPU, Flask |
+| `tracker.py` | IoU tracker with velocity prediction |
+| `events.py` | SQLite event log, snapshot store, webhooks |
+| `webui.py` | The browser UI (single self-contained page) |
+| `install.sh` / `uninstall.sh` | systemd service, udev rule, env file |
+| `download_model.sh` | Fetches the `.hef` |
+| `tests/` | Off-device test harness |
+
+## Testing
+
+The harness fakes the camera and the NPU and runs everything else for real, so you can check changes on a laptop before deploying:
+
+```bash
+pip install flask opencv-python numpy
+./tests/run_tests.sh
+```
+
+It verifies the letterbox round trip, track ID stability, live reconfiguration, multi-client streaming, the event log, and clean shutdown. It writes `tests/output_sample.jpg` so you can eyeball the annotation.
+
+## Service Management
+
+```bash
+sudo systemctl status hailo-tracker
+sudo journalctl -u hailo-tracker -f    # live logs, including detection events
+sudo systemctl restart hailo-tracker
+./uninstall.sh
+```
 
 ## Troubleshooting
 
 **`/dev/hailo0` permission denied**
+
 ```bash
 sudo rmmod hailo_pci && sudo modprobe hailo_pci
 ```
-Or run `./install.sh` which sets up a udev rule to fix this permanently.
+
+`./install.sh` writes a udev rule that fixes this permanently.
+
+**`hailo_platform` not found** — use the system Python (`/usr/bin/python3`), not a venv. If you built HailoRT from source the bindings land in `/usr/lib/aarch64-linux-gnu/python3.*/site-packages`; the script adds that path automatically.
 
 **Camera not found**
+
 ```bash
 rpicam-vid --list-cameras
 ```
 
-**Port 8080 in use** — change `HTTP_PORT` in `hailo_tracker.py`.
+**No `.hef`** — run `./download_model.sh`, or set `HEF_PATH`.
 
-**`hailo_platform` not found** — make sure you're using the system Python 3 (`/usr/bin/python3`), not a venv. The Hailo package installs into the system site-packages.
+**Boxes in the wrong place** — the model's input size doesn't match `NN_SIZE`. The startup log warns when it can detect this.
+
+**Boxes mirrored across the diagonal** — your model emits `[y1,x1,y2,x2]` rather than `[x1,y1,x2,y2]`. Set `BOX_ORDER=yxyx`.
+
+**Everything's blurry** — see the camera notes; `CAM_AUTOFOCUS=manual` without `CAM_LENS_POSITION` is the usual cause.
+
+**Boxes flicker on and off** — raise `CONF_THRESH`, or raise `TRACK_MAX_MISSES` so the tracker coasts longer.
+
+**False positives on rugs and blankets** — raise `TRACK_MIN_HITS` to 5, and/or `MIN_BOX_AREA_FRAC`.
+
+**Stream stutters with several viewers** — set `STREAM_MAX_FPS=15`, or lower `JPEG_QUALITY`.
+
+**Port 8080 in use** — set `HTTP_PORT`.
+
+More detail in [INSTALL.md](INSTALL.md) and [SETUP.md](SETUP.md).
+
+## Performance
+
+- ~30ms inference per frame on Hailo-8L
+- 25–30 FPS end to end at 720p
+- ~50–100ms latency, camera to browser
+- ~3W NPU power draw
+- Tracker overhead is well under 1ms for typical object counts
+
+## Roadmap
+
+- [ ] Line-crossing and dwell-time rules
+- [ ] Per-class confidence thresholds
+- [ ] Multi-camera support
+- [ ] Send detection position to a robot controller (BeagleBone Blue)
 
 ## License
 
-MIT
+Copyright (c) 2025 Ryan Lush. Free for personal, educational, and open-source use. Commercial use requires written permission — ryan.lush@gmail.com
+
+## Acknowledgments
+
+Hailo for the accelerator and HailoRT SDK, Ultralytics for YOLOv8, and the Raspberry Pi Foundation.

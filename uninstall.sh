@@ -12,6 +12,7 @@ sudo systemctl daemon-reload
 
 echo ""
 echo "Service removed."
-echo "Note: /etc/udev/rules.d/99-hailo.rules was kept (may be used by other Hailo apps)."
-echo "Remove manually if no longer needed: sudo rm /etc/udev/rules.d/99-hailo.rules"
+echo "Kept (remove manually if you no longer need them):"
+echo "  /etc/udev/rules.d/99-hailo.rules   — may be used by other Hailo apps"
+echo "  ./hailo-tracker.env                — your settings"
 echo ""

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" width="900" height="300" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+  <rect width="900" height="300" fill="#0d0f12" rx="6"/>
+
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4a5563"/>
+    </marker>
+  </defs>
+
+  <style>
+    .box  { fill:#161a1f; stroke:#2b323b; stroke-width:1.5; rx:5; }
+    .npu  { fill:#132a1d; stroke:#24d67c; stroke-width:1.5; }
+    .t    { fill:#e6e9ed; font-size:12px; text-anchor:middle; }
+    .s    { fill:#7d8794; font-size:10px; text-anchor:middle; }
+    .lane { fill:#6cf; font-size:10px; letter-spacing:.08em; }
+    .ln   { stroke:#4a5563; stroke-width:1.5; marker-end:url(#a); fill:none; }
+  </style>
+
+  <text x="24" y="34" class="lane">CAPTURE THREAD</text>
+
+  <rect class="box" x="24"  y="48" width="118" height="52"/>
+  <text class="t" x="83" y="70">rpicam-vid</text>
+  <text class="s" x="83" y="87">MJPEG 720p</text>
+
+  <rect class="box" x="176" y="48" width="118" height="52"/>
+  <text class="t" x="235" y="70">demux +</text>
+  <text class="s" x="235" y="87">decode, rotate</text>
+
+  <rect class="box" x="328" y="48" width="118" height="52"/>
+  <text class="t" x="387" y="70">letterbox</text>
+  <text class="s" x="387" y="87">640 × 640</text>
+
+  <rect class="box npu" x="480" y="48" width="140" height="52"/>
+  <text class="t" x="550" y="70" fill="#24d67c">Hailo-8L NPU</text>
+  <text class="s" x="550" y="87">YOLOv8s · ~30ms</text>
+
+  <rect class="box" x="654" y="48" width="118" height="52"/>
+  <text class="t" x="713" y="70">parse + ROI</text>
+  <text class="s" x="713" y="87">80 × [N,5]</text>
+
+  <line class="ln" x1="142" y1="74" x2="172" y2="74"/>
+  <line class="ln" x1="294" y1="74" x2="324" y2="74"/>
+  <line class="ln" x1="446" y1="74" x2="476" y2="74"/>
+  <line class="ln" x1="620" y1="74" x2="650" y2="74"/>
+
+  <path class="ln" d="M713 100 L713 128 L235 128 L235 152"/>
+
+  <text x="24" y="150" class="lane">RENDER THREAD</text>
+
+  <rect class="box" x="176" y="160" width="118" height="52"/>
+  <text class="t" x="235" y="182">tracker</text>
+  <text class="s" x="235" y="199">IoU + IDs</text>
+
+  <rect class="box" x="328" y="160" width="118" height="52"/>
+  <text class="t" x="387" y="182">annotate</text>
+  <text class="s" x="387" y="199">labels, trails</text>
+
+  <rect class="box" x="480" y="160" width="140" height="52"/>
+  <text class="t" x="550" y="182">encode once</text>
+  <text class="s" x="550" y="199">FramePublisher</text>
+
+  <line class="ln" x1="294" y1="186" x2="324" y2="186"/>
+  <line class="ln" x1="446" y1="186" x2="476" y2="186"/>
+
+  <rect class="box" x="700" y="132" width="176" height="34"/>
+  <text class="t" x="788" y="154">browser</text>
+
+  <rect class="box" x="700" y="176" width="176" height="34"/>
+  <text class="t" x="788" y="198">Home Assistant</text>
+
+  <rect class="box" x="700" y="220" width="176" height="34"/>
+  <text class="t" x="788" y="242">/snapshot · /events</text>
+
+  <path class="ln" d="M620 186 L660 186 L660 149 L696 149"/>
+  <line class="ln" x1="620" y1="186" x2="696" y2="193"/>
+  <path class="ln" d="M620 186 L660 186 L660 237 L696 237"/>
+
+  <rect class="box" x="24"  y="160" width="118" height="52"/>
+  <text class="t" x="83" y="182">SQLite log</text>
+  <text class="s" x="83" y="199">1 row / visit</text>
+  <path class="ln" d="M176 200 L146 200"/>
+
+  <text x="24" y="278" class="s" text-anchor="start">One encode serves every client · depth-2 queue keeps a slow viewer from back-pressuring the NPU</text>
+</svg>
