@@ -16,7 +16,7 @@ Route A is strongly recommended. Route B exists because `hailo-all` isn't packag
 
 - Raspberry Pi 5 (4GB+; 8GB if you also want to compile things comfortably)
 - Hailo-8L AI Kit — M.2 HAT+ or AI HAT+
-- Raspberry Pi Camera Module (IMX708 / Camera Module 3, or IMX477 / HQ Camera)
+- One or two Raspberry Pi camera modules, one per CSI port (IMX708 / Camera Module 3, IMX477 / HQ Camera). Both ports can run at once
 - MicroSD 32GB+, or an NVMe drive
 - The official 27W USB-C supply. Underpowering a Pi 5 with an NPU and a camera produces failures that look like software bugs
 
@@ -236,6 +236,36 @@ rpicam-vid --list-cameras
 
 If it's missing from your archive, add the Raspberry Pi PPA or use Route A. Camera support on Ubuntu for Pi lags Raspberry Pi OS, and this is the step most likely to give you trouble.
 
+`rpicam-apps`, not the older `libcamera-apps` — the tracker selects cameras with `--camera N`, which the older package doesn't have.
+
+### Two cameras
+
+`--list-cameras` should show one line per module:
+
+```
+Available cameras
+-----------------
+0 : imx708 [4608x2592 10-bit RGGB] (/base/axi/pcie@120000/rp1/i2c@88000/imx708@1a)
+1 : imx477 [4056x3040 12-bit RGGB] (/base/axi/pcie@120000/rp1/i2c@80000/imx477@1a)
+```
+
+Check each one moves pixels before involving the tracker:
+
+```bash
+rpicam-vid --camera 0 -t 3000 -o /tmp/cam0.jpg --encoding jpg
+rpicam-vid --camera 1 -t 3000 -o /tmp/cam1.jpg --encoding jpg
+```
+
+If only one is listed, it's a wiring or firmware problem rather than a software one. Reseat the ribbon (contacts toward the board on a Pi 5), and check `/boot/firmware/config.txt`: `camera_auto_detect=1` handles both ports, but `camera_auto_detect=0` with a single `dtoverlay=imx708` pins one sensor and hides the other. To name both explicitly, give each its port:
+
+```
+camera_auto_detect=0
+dtoverlay=imx708,cam0
+dtoverlay=imx477,cam1
+```
+
+Reboot after editing.
+
 ---
 
 # Install the tracker
@@ -269,15 +299,25 @@ CAM_SHUTTER=20000     # 1/50s
 CAM_GAIN=2
 ```
 
+These apply to camera 0 and are the fallback for every other camera, so with two modules pointed at the same room you set them once. Override only what differs, with a `CAM1_` prefix:
+
+```bash
+CAM1_SHUTTER=            # camera 1 is outdoors — let the ISP handle it
+CAM1_GAIN=
+CAM1_ROTATE=180          # mounted upside down
+```
+
+An IMX477 has no focus actuator, so the autofocus settings are dropped for it automatically — you don't need to blank `CAM1_AUTOFOCUS` yourself.
+
 Too dark → raise `CAM_GAIN` to 4 or 6 before lengthening the shutter; a longer shutter reintroduces motion blur, which costs detections.
 
 Outdoors → clear `CAM_SHUTTER` and `CAM_GAIN` entirely and let the ISP handle the range.
 
-Fixed scene (a bowl, a doorway) → `CAM_AUTOFOCUS=manual` plus `CAM_LENS_POSITION` for the distance. Manual AF *without* a lens position is the most common cause of a permanently blurry stream.
+Fixed scene (a bowl, a doorway) → `CAM_AUTOFOCUS=manual` plus `CAM_LENS_POSITION` for the distance. Manual AF *without* a lens position is the most common cause of a permanently blurry stream. (This is a Camera Module 3 concern; an HQ Camera is focused by hand at the lens.)
 
 ## 2. Threshold and stability
 
-Start at `CONF_THRESH=0.40` and adjust with the slider in the web UI while watching real footage.
+Start at `CONF_THRESH=0.40` and adjust it in the web UI while watching real footage — the value applies to every camera, since they share one NPU and one set of detection rules.
 
 - Missing obvious objects → lower it
 - Furniture being called "cat" → raise it, and raise `TRACK_MIN_HITS` to 5
@@ -298,6 +338,18 @@ Add an ROI if the camera sees more than you care about:
 ROI_POLYGON=[[0.05,0.4],[0.6,0.35],[0.65,0.95],[0.1,0.95]]
 SHOW_ROI=true
 ```
+
+## 4. Decide which cameras run the NPU
+
+Camera 0 detects; any additional camera comes up as plain video. That's deliberate — two cameras sharing one Hailo-8L halve the inference rate each one gets, and a second angle is often worth having as video regardless.
+
+Turn it on from the Cameras panel in the web UI to see the cost live, then pin whatever you settle on:
+
+```bash
+CAM1_DETECT=true
+```
+
+If splitting the NPU evenly isn't what you want, bias it — `CAM1_INFER_EVERY_N=2` runs inference on every second frame from camera 1 and leaves camera 0 the larger share. The tracker coasts between inferences, so this is usually invisible on a slow-moving subject.
 
 Turn on `SHOW_ROI`, look at the stream, adjust the points, restart. Coordinates are normalised, so they survive a resolution change.
 
@@ -326,14 +378,18 @@ hailortcli --version
 
 ```bash
 rpicam-vid --list-cameras
-rpicam-vid -t 3000 -o /tmp/t.jpg --encoding jpg
+rpicam-vid --camera 0 -t 3000 -o /tmp/t0.jpg --encoding jpg
+rpicam-vid --camera 1 -t 3000 -o /tmp/t1.jpg --encoding jpg
 v4l2-ctl --list-devices
+python3 hailo_tracker.py --list-cameras
 ```
 
 **Application**
 
 ```bash
 curl -s localhost:8080/stats | python3 -m json.tool
+curl -s localhost:8080/stats/1 | python3 -m json.tool     # one camera
+curl -s localhost:8080/cameras | python3 -m json.tool
 curl -s localhost:8080/events/summary | python3 -m json.tool
 curl -s localhost:8080/healthz
 ```

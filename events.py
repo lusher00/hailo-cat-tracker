@@ -30,6 +30,7 @@ from datetime import datetime
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    camera      INTEGER NOT NULL DEFAULT 0,
     track_id    INTEGER NOT NULL,
     class       TEXT    NOT NULL,
     started_at  REAL    NOT NULL,
@@ -41,7 +42,15 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_started ON events(started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_class   ON events(class, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_camera  ON events(camera, started_at DESC);
 """
+
+# Databases written before multi-camera support have no `camera` column. Adding
+# it with a default is the whole migration — old rows are all camera 0, which is
+# exactly what they were.
+MIGRATIONS = [
+    ("camera", "ALTER TABLE events ADD COLUMN camera INTEGER NOT NULL DEFAULT 0"),
+]
 
 
 class EventLog:
@@ -54,7 +63,7 @@ class EventLog:
         self._q = queue.Queue(maxsize=1000)
         self._stop = threading.Event()
         self._thread = None
-        self._id_map = {}            # track_id -> db row id
+        self._id_map = {}            # (camera, track_id) -> db row id
         self._id_map_lock = threading.Lock()
         self._dropped = 0
 
@@ -79,6 +88,11 @@ class EventLog:
         conn = self._connect()
         try:
             conn.executescript(SCHEMA)
+            have = {r["name"] for r in conn.execute("PRAGMA table_info(events)")}
+            for column, ddl in MIGRATIONS:
+                if column not in have:
+                    print(f"[events] migrating: adding {column!r} column")
+                    conn.execute(ddl)
             conn.commit()
         finally:
             conn.close()
@@ -117,19 +131,19 @@ class EventLog:
         kind = job[0]
 
         if kind == "start":
-            _, track_id, class_name, started_at, conf = job
+            _, camera, track_id, class_name, started_at, conf = job
             cur = conn.execute(
-                "INSERT INTO events (track_id, class, started_at, max_conf, frames) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (track_id, class_name, started_at, conf, 1),
+                "INSERT INTO events (camera, track_id, class, started_at, max_conf, frames) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (camera, track_id, class_name, started_at, conf, 1),
             )
             with self._id_map_lock:
-                self._id_map[track_id] = cur.lastrowid
+                self._id_map[(camera, track_id)] = cur.lastrowid
 
         elif kind == "end":
-            _, track_id, ended_at, duration, max_conf, frames = job
+            _, camera, track_id, ended_at, duration, max_conf, frames = job
             with self._id_map_lock:
-                row_id = self._id_map.pop(track_id, None)
+                row_id = self._id_map.pop((camera, track_id), None)
             if row_id is None:
                 return
             conn.execute(
@@ -139,9 +153,9 @@ class EventLog:
             )
 
         elif kind == "snapshot":
-            _, track_id, path = job
+            _, camera, track_id, path = job
             with self._id_map_lock:
-                row_id = self._id_map.get(track_id)
+                row_id = self._id_map.get((camera, track_id))
             if row_id is None:
                 return
             conn.execute("UPDATE events SET snapshot=? WHERE id=?", (path, row_id))
@@ -171,20 +185,20 @@ class EventLog:
             if self._dropped % 100 == 1:
                 print(f"[events] queue full — dropped {self._dropped} events")
 
-    def track_started(self, track):
-        self._submit(("start", track.id, track.class_name,
+    def track_started(self, track, camera=0):
+        self._submit(("start", int(camera), track.id, track.class_name,
                       track.first_seen, track.max_conf))
 
-    def track_ended(self, track):
-        self._submit(("end", track.id, track.last_seen, track.duration,
-                      track.max_conf, track.hits))
+    def track_ended(self, track, camera=0):
+        self._submit(("end", int(camera), track.id, track.last_seen,
+                      track.duration, track.max_conf, track.hits))
 
-    def attach_snapshot(self, track_id, path):
-        self._submit(("snapshot", track_id, os.path.basename(path)))
+    def attach_snapshot(self, track_id, path, camera=0):
+        self._submit(("snapshot", int(camera), track_id, os.path.basename(path)))
 
     # ---------------------------------------------------------
 
-    def recent(self, limit=50, class_name=None, since=None):
+    def recent(self, limit=50, class_name=None, since=None, camera=None):
         if not self.enabled:
             return []
         conn = self._connect()
@@ -197,6 +211,9 @@ class EventLog:
             if since:
                 where.append("started_at >= ?")
                 args.append(float(since))
+            if camera is not None:
+                where.append("camera = ?")
+                args.append(int(camera))
             if where:
                 sql += " WHERE " + " AND ".join(where)
             sql += " ORDER BY started_at DESC LIMIT ?"
@@ -219,7 +236,7 @@ class EventLog:
             d["max_conf"] = round(d["max_conf"], 3)
         return d
 
-    def summary(self, since=None):
+    def summary(self, since=None, camera=None):
         """Per-class totals — how many visits, total time in frame."""
         if not self.enabled:
             return {}
@@ -230,10 +247,15 @@ class EventLog:
                    "COALESCE(MAX(max_conf), 0) AS peak_conf, "
                    "MAX(started_at) AS last_seen "
                    "FROM events")
-            args = []
+            where, args = [], []
             if since:
-                sql += " WHERE started_at >= ?"
+                where.append("started_at >= ?")
                 args.append(float(since))
+            if camera is not None:
+                where.append("camera = ?")
+                args.append(int(camera))
+            if where:
+                sql += " WHERE " + " AND ".join(where)
             sql += " GROUP BY class ORDER BY events DESC"
 
             out = {}
@@ -249,14 +271,14 @@ class EventLog:
         finally:
             conn.close()
 
-    def write_csv(self, fh, limit=10000):
-        rows = self.recent(limit=limit)
+    def write_csv(self, fh, limit=10000, camera=None):
+        rows = self.recent(limit=limit, camera=camera)
         writer = csv.writer(fh)
-        writer.writerow(["id", "track_id", "class", "started", "ended",
+        writer.writerow(["id", "camera", "track_id", "class", "started", "ended",
                          "duration_s", "max_conf", "frames", "snapshot"])
         for r in rows:
             writer.writerow([
-                r["id"], r["track_id"], r["class"],
+                r["id"], r.get("camera", 0), r["track_id"], r["class"],
                 r.get("started_iso", ""), r.get("ended_iso", ""),
                 r.get("duration_s", ""), r.get("max_conf", ""),
                 r.get("frames", ""), r.get("snapshot", "") or "",
@@ -283,25 +305,30 @@ class SnapshotStore:
         self.max_files = max_files
         self.cooldown_s = cooldown_s
         self.enabled = enabled
-        self._last = {}                 # class name -> last save time
+        self._last = {}                 # (camera, class name) -> last save time
         self._lock = threading.Lock()
         if self.enabled:
             os.makedirs(self.dir, exist_ok=True)
 
-    def maybe_save(self, class_name, track_id, jpeg_bytes):
-        """Returns the saved path, or None if skipped."""
+    def maybe_save(self, class_name, track_id, jpeg_bytes, camera=0):
+        """Returns the saved path, or None if skipped.
+
+        The cooldown is per (camera, class): a cat in front of camera 0 must not
+        suppress the snapshot of a cat that just walked into camera 1.
+        """
         if not self.enabled or not jpeg_bytes:
             return None
 
         now = time.time()
+        key = (int(camera), class_name)
         with self._lock:
-            if now - self._last.get(class_name, 0) < self.cooldown_s:
+            if now - self._last.get(key, 0) < self.cooldown_s:
                 return None
-            self._last[class_name] = now
+            self._last[key] = now
 
         stamp = datetime.fromtimestamp(now).strftime("%Y%m%d-%H%M%S")
         safe = "".join(c if c.isalnum() else "_" for c in class_name)
-        name = f"{stamp}_{safe}_{track_id}.jpg"
+        name = f"{stamp}_cam{int(camera)}_{safe}_{track_id}.jpg"
         path = os.path.join(self.dir, name)
 
         try:
@@ -397,6 +424,7 @@ class Webhook:
             "iso": datetime.now().isoformat(timespec="seconds"),
             "track": track.to_dict(),
         }
+
         if extra:
             payload.update(extra)
         try:

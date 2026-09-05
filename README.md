@@ -1,6 +1,6 @@
 # Hailo Tracker
 
-Real-time object detection and tracking on a Raspberry Pi 5 with a Hailo-8L NPU. Streams annotated video to any browser over HTTP.
+Real-time object detection and tracking on a Raspberry Pi 5 with a Hailo-8L NPU. Streams annotated video from one or both CSI cameras to any browser over HTTP.
 
 Labels every object it sees — all 80 COCO classes, each with its own colour, a confidence score, and a track ID that stays with the object as it moves. Narrow it to just cats, or just people, from the web UI without restarting anything.
 
@@ -10,7 +10,7 @@ Labels every object it sees — all 80 COCO classes, each with its own colour, a
 
 - Raspberry Pi 5 (4GB+)
 - Hailo-8L AI Kit — M.2 HAT+ or AI HAT+ (13 TOPS)
-- Raspberry Pi Camera Module (tested on IMX708 / Camera Module 3 and IMX477 / HQ Camera)
+- One or two Raspberry Pi camera modules, one per CSI port (tested with an IMX708 / Camera Module 3 on port 0 and an IMX477 / HQ Camera on port 1)
 
 ## Features
 
@@ -21,6 +21,13 @@ Labels every object it sees — all 80 COCO classes, each with its own colour, a
 - Persistent track IDs — "cat #3 was here for 90 seconds", not 2,700 unrelated frames
 - Motion trails, confidence thresholding, minimum box size filter
 - Region of interest — ignore everything outside a polygon you define
+
+**Cameras**
+
+- Both CSI ports at once — each camera gets its own capture thread, tracker, stats and stream
+- Cameras are auto-detected at startup; sensor-specific quirks handled (no autofocus flags sent to an IMX477)
+- Detection is per camera and switchable live, so a second camera can be plain video until you want the NPU on it
+- Per-camera capture settings — resolution, framerate, rotation and exposure are independent
 
 **Interface**
 
@@ -60,10 +67,14 @@ If HailoRT isn't installed yet, work through [SETUP.md](SETUP.md) first — abou
 ## Running by hand
 
 ```bash
-python3 hailo_tracker.py                          # everything, all classes
+python3 hailo_tracker.py                          # every camera found, all classes
 python3 hailo_tracker.py --classes cat,dog        # pets only
 python3 hailo_tracker.py --conf 0.6 --rotate 90
+python3 hailo_tracker.py --cameras 0,1            # force both CSI ports
+python3 hailo_tracker.py --detect-cameras 0,1     # run the NPU on both
+python3 hailo_tracker.py --cameras 0              # single camera, ignore port 1
 python3 hailo_tracker.py --snapshots --webhook http://ha.local/api/webhook/cat
+python3 hailo_tracker.py --list-cameras
 python3 hailo_tracker.py --list-classes
 ```
 
@@ -72,6 +83,8 @@ Full flag list:
 | Flag | Effect |
 |------|--------|
 | `--port N` | HTTP port |
+| `--cameras 0,1` | Which CSI cameras to run (`auto` by default) |
+| `--detect-cameras 0,1` | Which cameras run the NPU (camera 0 only by default) |
 | `--classes a,b` | Class filter |
 | `--conf 0.6` | Confidence threshold |
 | `--model path.hef` | Use a specific model |
@@ -82,6 +95,9 @@ Full flag list:
 | `--snapshots` | Save a JPEG per new detection |
 | `--webhook URL` | POST detections to URL |
 | `--list-classes` | Print all 80 classes with IDs and exit |
+| `--list-cameras` | Print what libcamera can see and exit |
+
+`--width`, `--height`, `--fps` and `--rotate` apply to camera 0. Use the `CAM1_*` variables below for the second camera.
 
 ## Configuration
 
@@ -98,19 +114,61 @@ sudo systemctl restart hailo-tracker
 TRACKED_CLASSES=cat,dog,person   # empty = all 80 classes
 CONF_THRESH=0.40
 
+CAMERAS=auto                     # auto | 0 | 0,1
+
 CAM_WIDTH=1280
 CAM_HEIGHT=720
 CAM_FRAMERATE=30
 CAM_AUTOFOCUS=continuous
 CAM_SHUTTER=20000                # microseconds; blank = auto exposure
 CAM_GAIN=2
+CAM_ROTATE=0                     # 0, 90, 180, 270
 
-ROTATE_DEGREES=0                 # 0, 90, 180, 270
+CAM1_FRAMERATE=15                # camera 1 inherits camera 0 unless told otherwise
+CAM1_ROTATE=180
+CAM1_DETECT=true                 # run the NPU on camera 1 as well
+
 SNAPSHOT_ON_DETECT=true
 WEBHOOK_URL=http://homeassistant.local:8123/api/webhook/hailo
 ```
 
 The file installed by `install.sh` lists every available setting with comments. Confidence, the class filter, and the display toggles can also be changed live from the web UI — those changes apply instantly but reset to the file's values on restart.
+
+### Multiple cameras
+
+Plug a second module into the other CSI port and it is picked up on the next restart — `CAMERAS` defaults to `auto`, which asks libcamera what is present. `--list-cameras` shows what it found:
+
+```
+$ python3 hailo_tracker.py --list-cameras
+  0  imx708
+  1  imx477
+```
+
+Camera 0 reads the unprefixed variables (`CAM_WIDTH`, `CAM_FRAMERATE`, …). Every other camera reads a `CAMN_` prefix and **falls back to whatever camera 0 resolved to**, so you only set what differs:
+
+```bash
+CAM_FRAMERATE=30                 # both cameras, unless overridden
+CAM1_FRAMERATE=15                # ...except camera 1
+CAM1_ROTATE=180                  # mounted upside down
+```
+
+Every per-camera setting works this way: `CAM1_WIDTH`, `CAM1_HEIGHT`, `CAM1_FRAMERATE`, `CAM1_ROTATE`, `CAM1_SHUTTER`, `CAM1_GAIN`, `CAM1_EV`, `CAM1_DENOISE`, `CAM1_AUTOFOCUS`, `CAM1_LENS_POSITION`, `CAM1_HFLIP`, `CAM1_VFLIP`, `CAM1_EXTRA_ARGS`, `CAM1_INFER_EVERY_N`, `CAM1_DETECT`.
+
+**Detection is opt-in per camera.** Camera 0 runs the NPU; any additional camera comes up as plain video, because two cameras sharing one accelerator halve the inference rate each one gets. Turn it on from the Cameras panel in the web UI, or pin it:
+
+```bash
+CAM1_DETECT=true
+```
+
+```bash
+curl -X POST http://<pi-ip>:8080/api/config \
+     -H 'Content-Type: application/json' \
+     -d '{"cameras": {"1": {"detect": true}}}'
+```
+
+The class filter, confidence threshold and display toggles are global — one NPU, one set of rules. What is per camera: capture settings, track IDs, stats, and whether inference runs at all. Track IDs restart at 1 for each camera, so an event is identified by the `(camera, track_id)` pair; the event log, the CSV export and the webhook payload all carry the camera index.
+
+If a sensor has no focus actuator (IMX477, IMX219, OV5647) the autofocus flags are dropped automatically rather than handed to `rpicam-vid`, which would otherwise refuse to start and show up as a camera that restarts forever.
 
 ### Camera notes
 
@@ -150,17 +208,22 @@ Coordinates are normalised 0–1, so they survive a resolution change. A detecti
 
 | Path | Returns |
 |------|---------|
-| `/` | Web UI — live stream plus control panel |
-| `/video` | MJPEG stream. Drop into Home Assistant, VLC, or an `<img>` tag |
-| `/snapshot` | Latest annotated frame, single JPEG |
-| `/tracks` | JSON array of what's in frame right now, with IDs and boxes |
-| `/stats` | FPS, inference time, frame and drop counts, per-class totals |
-| `/events` | Recent detection events. `?limit=`, `?class=`, `?since=` |
-| `/events/summary` | Per-class visit counts and total time in frame |
-| `/events.csv` | Full event log as CSV |
+| `/` | Web UI — every camera plus the control panel |
+| `/video` | MJPEG stream from camera 0. Drop into Home Assistant, VLC, or an `<img>` tag |
+| `/video/<n>` | MJPEG stream from camera `n` |
+| `/snapshot` | Latest annotated frame from camera 0, single JPEG |
+| `/snapshot/<n>` | Latest annotated frame from camera `n` |
+| `/cameras` | What's configured — index, sensor, resolution, whether detection is on |
+| `/tracks` | What's in frame right now across every camera, with IDs and boxes |
+| `/tracks/<n>` | The same for camera `n` only |
+| `/stats` | Totals for the whole rig, plus a `cameras` array with per-camera detail |
+| `/stats/<n>` | Just camera `n` |
+| `/events` | Recent detection events. `?limit=`, `?class=`, `?since=`, `?camera=` |
+| `/events/summary` | Per-class visit counts and total time in frame. `?camera=` |
+| `/events.csv` | Full event log as CSV. `?camera=` |
 | `/snapshots` | Saved snapshot filenames |
 | `/snapshots/<name>` | A specific saved snapshot |
-| `/metrics` | Prometheus exposition format |
+| `/metrics` | Prometheus exposition format — every series carries a `camera` label |
 | `/healthz` | 200 if a frame arrived in the last 10s, else 503 |
 | `/api/config` | GET current settings; POST to change them live |
 | `/api/snapshot` | POST to save the current frame to disk on demand |
@@ -174,6 +237,11 @@ curl -o cat.jpg http://<pi-ip>:8080/snapshot
 curl -X POST http://<pi-ip>:8080/api/config \
      -H 'Content-Type: application/json' \
      -d '{"tracked_classes": ["cat"], "conf_thresh": 0.5}'
+
+# Start running the NPU on the second camera
+curl -X POST http://<pi-ip>:8080/api/config \
+     -H 'Content-Type: application/json' \
+     -d '{"cameras": {"1": {"detect": true}}}'
 ```
 
 ### Webhook payload
@@ -183,6 +251,7 @@ curl -X POST http://<pi-ip>:8080/api/config \
   "event": "detection",
   "timestamp": 1754238401.22,
   "iso": "2026-08-03T16:26:41",
+  "camera": 1,
   "track": {
     "id": 7, "class": "cat", "class_id": 15,
     "box": [822, 440, 1000, 558],
@@ -200,8 +269,8 @@ One row per track, not per frame:
 
 ```bash
 sqlite3 events.db \
-  "SELECT class, COUNT(*), ROUND(SUM(duration_s)/60,1) AS minutes
-   FROM events GROUP BY class ORDER BY 2 DESC;"
+  "SELECT camera, class, COUNT(*), ROUND(SUM(duration_s)/60,1) AS minutes
+   FROM events GROUP BY camera, class ORDER BY 3 DESC;"
 ```
 
 ```
@@ -225,21 +294,29 @@ Full list via `python3 hailo_tracker.py --list-classes`. Common ones:
 
 ## Architecture
 
+One `CameraPipeline` per camera, all the way from `rpicam-vid` to the published JPEG. The NPU is the only shared stage:
+
 ```
-Camera (IMX708 / IMX477)
-    ↓ rpicam-vid, MJPEG
-capture thread ── JPEG demux → decode → rotate → letterbox 640×640
-    ↓
-Hailo-8L NPU (YOLOv8s)
-    ↓ [80][N, 5] detections
-parse → ROI filter → IoU tracker (persistent IDs)
-    ↓
-render thread ── annotate → encode once
-    ↓
-FramePublisher ──┬── browser 1
+cam0 (IMX708)                      cam1 (IMX477)
+    ↓ rpicam-vid --camera 0            ↓ rpicam-vid --camera 1
+capture thread                     capture thread
+JPEG demux → decode → rotate       JPEG demux → decode → rotate
+    ↓ letterbox 640×640                ↓ letterbox 640×640
+    └──────────────┬────────────────────┘
+                   ↓
+        Hailo-8L NPU (YOLOv8s)      ← one lock, requests serialised
+                   ↓ [80][N, 5] detections
+    ┌──────────────┴────────────────────┐
+    ↓                                   ↓
+parse → ROI → IoU tracker           parse → ROI → IoU tracker
+render thread → annotate → encode   render thread → annotate → encode
+    ↓                                   ↓
+FramePublisher ──┬── browser 1      FramePublisher ── browser
                  ├── browser 2
                  └── Home Assistant
 ```
+
+Each camera has its own capture thread, render thread, depth-2 queue, tracker, stats and publisher, so a hiccup on one camera — a restart, a slow encode, a stalled client — cannot drop frames on the other. What they share is the NPU, the event log and the detection settings.
 
 Capture and render are separate threads with a depth-2 queue between them, so a slow client or a busy encode can't back-pressure the NPU. The render thread encodes each frame exactly once no matter how many clients are watching.
 
@@ -272,7 +349,7 @@ pip install flask opencv-python numpy
 ./tests/run_tests.sh
 ```
 
-It verifies the letterbox round trip, track ID stability, live reconfiguration, multi-client streaming, the event log, and clean shutdown. It writes `tests/output_sample.jpg` so you can eyeball the annotation.
+It starts **two** fake cameras — the stand-in answers `--list-cameras` with an IMX708 on port 0 and an IMX477 on port 1 — so camera enumeration, per-camera config, and switching detection on and off at runtime are all covered. It verifies the letterbox round trip, track ID stability, live reconfiguration, multi-client streaming, the event log, and clean shutdown. It writes `tests/output_sample.jpg` so you can eyeball the annotation.
 
 ## Service Management
 
@@ -342,7 +419,12 @@ ls -l /dev/hailo0      # want crw-rw-rw-
 
 ```bash
 rpicam-vid --list-cameras
+python3 hailo_tracker.py --list-cameras
 ```
+
+**Second camera never appears** — if `--list-cameras` shows only one, the Pi isn't seeing the module: check the ribbon seating and orientation, and that no `dtoverlay` in `/boot/firmware/config.txt` is pinning a single sensor. `camera_auto_detect=0` with a single explicit `dtoverlay=imx708` will hide the second port. If `--list-cameras` shows both but only one streams, force it with `CAMERAS=0,1` and read the log for that camera's `rpicam-vid` line and exit code.
+
+**One camera restarts in a loop** — read the `[cam1] error:` lines. `rpicam-vid exited 1` immediately after start is almost always an unsupported flag for that sensor. Autofocus is handled automatically for the sensors listed above; for anything else, set `CAM1_AUTOFOCUS=` (empty) to drop it.
 
 **No `.hef`** — run `./download_model.sh`, or set `HEF_PATH`.
 
@@ -374,11 +456,13 @@ Where the time goes, in rough order: NPU inference (~30ms, fixed), JPEG decode o
 
 To buy frames back: lower `CAM_WIDTH`/`CAM_HEIGHT` first (decode dominates above 720p), then `JPEG_QUALITY`, then `INFER_EVERY_N` as a last resort — the tracker coasts between inferences, so 2 or 3 is usually invisible for slow-moving subjects.
 
+**With detection on two cameras** the ~30ms of inference is spent alternately, so each camera sees roughly half the inference rate while both keep streaming video at full framerate. If that isn't enough, `CAM1_INFER_EVERY_N=2` gives camera 0 the larger share rather than splitting evenly.
+
 ## Roadmap
 
 - [ ] Line-crossing and dwell-time rules
 - [ ] Per-class confidence thresholds
-- [ ] Multi-camera support
+- [x] Multi-camera support
 - [ ] Send detection position to a robot controller (BeagleBone Blue)
 
 ## License

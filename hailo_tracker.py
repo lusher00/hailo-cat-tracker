@@ -13,18 +13,20 @@ Labels every detected object by default (all 80 COCO classes, each with its own
 colour and a stable track ID). Narrow it down live from the web UI, or pin a
 class list in the config.
 
-Pipeline:
+Pipeline — one of these per camera, sharing the one NPU:
 
     rpicam-vid ──> capture thread ──> NPU ──> tracker ──> render thread ──┐
-                                                                          │
-                             all browser clients read the same ───────────┘
-                             published frame (no per-client re-encode)
+       --camera N                      │                                  │
+                                       │      all browser clients read ────┘
+                    serialised across  │      the same published frame
+                    cameras by a lock ─┘      (no per-client re-encode)
 
 Every CONFIG constant can be overridden by an environment variable of the same
 name, or a --flag on the command line. Precedence: CLI > env > file default.
 """
 
 import os
+import re
 import sys
 import csv
 import io
@@ -71,8 +73,19 @@ def _env(name, default, cast=str):
     try:
         return cast(raw)
     except (TypeError, ValueError):
-        print(f"[WARN] Bad value for {name}={raw!r} — using default {default!r}")
+        log(f"[WARN] Bad value for {name}={raw!r} — using default {default!r}")
         return default
+
+
+_print_lock = threading.Lock()
+
+
+def log(msg):
+    """print() from a thread is two writes — the text, then the newline — so
+    with a capture and a render thread per camera all logging at once, lines
+    end up spliced into each other. Serialise them."""
+    with _print_lock:
+        print(msg, flush=True)
 
 
 # ---------- server ----------
@@ -113,24 +126,229 @@ TRACK_MAX_MISSES = _env("TRACK_MAX_MISSES", 15, int)
 TRACK_MIN_HITS   = _env("TRACK_MIN_HITS", 3, int)
 TRAIL_LENGTH     = _env("TRAIL_LENGTH", 48, int)
 
-# ---------- camera ----------
-# Defaults carried over from the cat-tracker build, which was aimed at a moving
-# animal indoors. 720p keeps latency down (the net downsamples to 640 anyway),
-# and a pinned shutter/gain stops auto-exposure hunting from smearing motion.
-CAM_WIDTH     = _env("CAM_WIDTH", 1280, int)
-CAM_HEIGHT    = _env("CAM_HEIGHT", 720, int)
-CAM_FRAMERATE = _env("CAM_FRAMERATE", 30, int)
-CAM_AUTOFOCUS = _env("CAM_AUTOFOCUS", "continuous")   # continuous|manual|auto
-CAM_LENS_POS  = _env("CAM_LENS_POSITION", "")         # dioptres, manual AF only
-CAM_SHUTTER   = _env("CAM_SHUTTER", "20000")          # µs; "" = auto
-CAM_GAIN      = _env("CAM_GAIN", "2")                 # "" = auto
-CAM_EV        = _env("CAM_EV", "0")
-CAM_DENOISE   = _env("CAM_DENOISE", "off")
-CAM_HFLIP     = _env("CAM_HFLIP", False, bool)
-CAM_VFLIP     = _env("CAM_VFLIP", False, bool)
-CAM_EXTRA_ARGS = _env("CAM_EXTRA_ARGS", "")           # raw passthrough
+# ---------- cameras ----------
+# Every camera on the CSI bus gets its own capture thread, tracker, stats and
+# MJPEG publisher — a second camera is another CameraPipeline instance, not a
+# second copy of the pipeline code. The NPU is the one shared resource, and
+# run_inference() serialises access to it.
+#
+# Which cameras to run:
+#     CAMERAS=auto        ask libcamera what is plugged in (default)
+#     CAMERAS=0           force a single camera
+#     CAMERAS=0,1         force both CSI ports
+#
+# Camera 0 reads the historical unprefixed names, so existing .env files and
+# systemd units keep working untouched. Camera N reads CAMN_* and falls back to
+# whatever camera 0 resolved to:
+#
+#     CAM_WIDTH=1280               CAM1_WIDTH=1280
+#     CAM_FRAMERATE=30             CAM1_FRAMERATE=15
+#     CAM_ROTATE=0                 CAM1_ROTATE=180
+#                                  CAM1_DETECT=1     run the NPU on camera 1 too
+#
+# Defaults are carried over from the cat-tracker build, which was aimed at a
+# moving animal indoors. 720p keeps latency down (the net downsamples to 640
+# anyway), and a pinned shutter/gain stops auto-exposure hunting from smearing
+# motion.
+CAMERAS_SPEC = _env("CAMERAS", "auto")
 
-ROTATE_DEGREES = _env("ROTATE_DEGREES", 0, int)
+# key -> (default for camera 0, cast)
+_CAM_DEFAULTS = {
+    "width":         (1280, int),
+    "height":        (720, int),
+    "framerate":     (30, int),
+    "autofocus":     ("continuous", str),   # continuous|manual|auto|"" for none
+    "lens_position": ("", str),             # dioptres, manual AF only
+    "shutter":       ("20000", str),        # µs; "" = auto
+    "gain":          ("2", str),            # "" = auto
+    "ev":            ("0", str),
+    "denoise":       ("off", str),
+    "hflip":         (False, bool),
+    "vflip":         (False, bool),
+    "extra_args":    ("", str),             # raw passthrough to rpicam-vid
+    "rotate":        (0, int),              # 0|90|180|270
+    "infer_every_n": (INFER_EVERY_N, int),
+    "detect":        (True, bool),          # run the NPU on this camera
+}
+
+# Pre-multi-camera variable names, still honoured for camera 0.
+_CAM0_ALIASES = {
+    "lens_position": "CAM_LENS_POSITION",
+    "rotate":        "ROTATE_DEGREES",
+    "infer_every_n": "INFER_EVERY_N",
+}
+
+# Secondary cameras come up as plain video. Turn detection on per camera from
+# the web UI, or pin it with CAMN_DETECT=1.
+_CAM_SECONDARY_DEFAULTS = {"detect": False}
+
+# Sensors with no focus actuator. Handing --autofocus-mode to rpicam-vid on one
+# of these makes it exit immediately, which would otherwise surface as an
+# endless capture-restart loop rather than an obvious error.
+NO_AUTOFOCUS_SENSORS = {"imx477", "imx219", "imx296", "imx290", "imx462", "ov5647"}
+
+_ROTATE_MAP = {0: None, 90: cv2.ROTATE_90_CLOCKWISE,
+               180: cv2.ROTATE_180, 270: cv2.ROTATE_90_COUNTERCLOCKWISE}
+
+
+class CameraConfig:
+    """Resolved capture settings for one camera."""
+
+    def __init__(self, index, sensor="", base=None):
+        self.index = int(index)
+        self.sensor = (sensor or "").lower()
+        prefix = "CAM_" if self.index == 0 else f"CAM{self.index}_"
+        self._explicit = set()
+
+        for key, (root_default, cast) in _CAM_DEFAULTS.items():
+            if base is None:
+                fallback = root_default
+            elif key in _CAM_SECONDARY_DEFAULTS:
+                fallback = _CAM_SECONDARY_DEFAULTS[key]
+            else:
+                fallback = getattr(base, key)
+
+            names = [prefix + key.upper()]
+            if self.index == 0 and key in _CAM0_ALIASES:
+                names.append(_CAM0_ALIASES[key])
+
+            value = fallback
+            for name in names:
+                if name in os.environ:
+                    value = _env(name, fallback, cast)
+                    self._explicit.add(key)
+                    break
+            setattr(self, key, value)
+
+        if self.rotate not in _ROTATE_MAP:
+            log(f"[WARN] cam{self.index}: rotate={self.rotate} invalid "
+                  f"(use 0/90/180/270) — ignoring")
+            self.rotate = 0
+
+        self.infer_every_n = max(1, int(self.infer_every_n))
+
+        # An IMX477 has no autofocus. Drop the flag rather than let rpicam-vid
+        # refuse to start — unless the operator asked for it explicitly, in
+        # which case they get to see the error.
+        if (self.autofocus and "autofocus" not in self._explicit
+                and self.sensor in NO_AUTOFOCUS_SENSORS):
+            self.autofocus = ""
+
+    @property
+    def name(self):
+        return f"cam{self.index}"
+
+    @property
+    def rotate_flag(self):
+        return _ROTATE_MAP.get(self.rotate)
+
+    def describe(self):
+        bits = [f"{self.width}x{self.height}@{self.framerate}"]
+        if self.sensor:
+            bits.append(self.sensor)
+        if self.rotate:
+            bits.append(f"rotate={self.rotate}deg")
+        if self.autofocus:
+            bits.append(f"AF={self.autofocus}")
+        bits.append("detecting" if self.detect else "stream only")
+        return ", ".join(bits)
+
+    def to_dict(self):
+        return {"index": self.index, "name": self.name, "sensor": self.sensor,
+                "width": self.width, "height": self.height,
+                "framerate": self.framerate, "rotate": self.rotate,
+                "detect": self.detect, "infer_every_n": self.infer_every_n}
+
+    def rpicam_cmd(self):
+        cmd = [
+            "rpicam-vid",
+            "--camera", str(self.index),
+            "--codec", "mjpeg",
+            "--inline", "--nopreview", "--flush",
+            "--width", str(self.width),
+            "--height", str(self.height),
+            "--framerate", str(self.framerate),
+            "--timeout", "0",
+            "--output", "-",
+        ]
+        if self.denoise:
+            cmd += ["--denoise", self.denoise]
+        if self.autofocus:
+            cmd += ["--autofocus-mode", self.autofocus]
+            if self.autofocus == "manual" and self.lens_position:
+                cmd += ["--lens-position", self.lens_position]
+        if self.ev != "":
+            cmd += ["--ev", self.ev]
+        if self.shutter != "":
+            cmd += ["--shutter", self.shutter]
+        if self.gain != "":
+            cmd += ["--gain", self.gain]
+        if self.hflip:
+            cmd += ["--hflip"]
+        if self.vflip:
+            cmd += ["--vflip"]
+        if self.extra_args:
+            cmd += self.extra_args.split()
+        return cmd
+
+
+#   0 : imx708 [4608x2592 10-bit RGGB] (/base/axi/pcie@120000/rp1/i2c@88000/...)
+_CAM_LIST_RE = re.compile(r"^\s*(\d+)\s*:\s*(\S+)")
+
+
+def detect_cameras(timeout=8.0):
+    """Ask libcamera what is on the CSI ports -> [(index, sensor), ...]."""
+    for exe in ("rpicam-hello", "libcamera-hello", "rpicam-vid"):
+        try:
+            proc = subprocess.run([exe, "--list-cameras"], capture_output=True,
+                                  text=True, timeout=timeout)
+        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+            continue
+        text = (proc.stdout or "") + (proc.stderr or "")
+        if "Available cameras" not in text:
+            continue
+        found = []
+        for line in text.splitlines():
+            m = _CAM_LIST_RE.match(line)
+            if m:
+                found.append((int(m.group(1)), m.group(2).lower()))
+        if found:
+            return sorted(set(found))
+    return []
+
+
+def build_camera_configs(spec=None):
+    """Turn a CAMERAS= spec into the list of CameraConfig to run."""
+    spec = (CAMERAS_SPEC if spec is None else spec).strip()
+    sensors = dict(detect_cameras())
+
+    if spec.lower() in ("", "auto"):
+        indices = sorted(sensors)
+        if not indices:
+            log("[camera] could not enumerate cameras — assuming one on port 0")
+            indices = [0]
+    else:
+        indices = []
+        for part in spec.split(","):
+            part = part.strip()
+            if part.isdigit():
+                indices.append(int(part))
+            elif part:
+                log(f"[WARN] CAMERAS entry {part!r} is not an index — ignored")
+        indices = sorted(dict.fromkeys(indices)) or [0]
+        missing = [i for i in indices if sensors and i not in sensors]
+        if missing:
+            log(f"[WARN] camera(s) {missing} were not reported by libcamera — "
+                  f"starting them anyway")
+
+    configs, base = [], None
+    for i in indices:
+        cfg = CameraConfig(i, sensors.get(i, ""), base=base)
+        if base is None:
+            base = cfg
+        configs.append(cfg)
+    return configs
+
 
 # ---------- output ----------
 JPEG_QUALITY   = _env("JPEG_QUALITY", 85, int)
@@ -207,7 +425,7 @@ def resolve_class_ids(names):
         elif key.isdigit() and 0 <= int(key) < len(COCO_CLASSES):
             ids.add(int(key))
         else:
-            print(f"[WARN] Unknown class {n!r} — ignored")
+            log(f"[WARN] Unknown class {n!r} — ignored")
     return ids or set(range(len(COCO_CLASSES)))
 
 
@@ -335,9 +553,6 @@ class Stats:
             return (time.time() - self.last_frame_at) < 10.0 if self.last_frame_at else False
 
 
-STATS = Stats()
-
-
 # ============================================================
 # FRAME PUBLISHER — one encode, many clients
 # ============================================================
@@ -379,8 +594,9 @@ class FramePublisher:
             return self._seq
 
 
-PUBLISHER = FramePublisher()
-detect_q: "queue.Queue" = queue.Queue(maxsize=2)
+# index -> CameraPipeline, in the order the cameras were configured.
+CAMS = {}
+STARTED_AT = time.time()
 _shutdown = threading.Event()
 
 
@@ -396,7 +612,7 @@ def _parse_roi(raw):
             raise ValueError("need at least 3 points")
         return np.array([[float(x), float(y)] for x, y in pts], dtype=np.float32)
     except Exception as e:
-        print(f"[WARN] ROI_POLYGON ignored ({e}). "
+        log(f"[WARN] ROI_POLYGON ignored ({e}). "
               f'Expected JSON like [[0.1,0.1],[0.9,0.1],[0.9,0.9]]')
         return None
 
@@ -441,7 +657,7 @@ def find_hef():
 
 def init_hailo():
     path = find_hef()
-    print(f"[hailo] Loading {path} ...")
+    log(f"[hailo] Loading {path} ...")
 
     hef = HEF(path)
     target = VDevice()
@@ -464,14 +680,14 @@ def init_hailo():
                    "activated": activated, "in": in_info.name,
                    "out": out_info.name, "path": path})
 
-    print(f"[hailo] Ready — in {in_info.name} {in_info.shape}, out {out_info.name}")
+    log(f"[hailo] Ready — in {in_info.name} {in_info.shape}, out {out_info.name}")
 
     # Reading the output name off the HEF instead of hardcoding
     # 'yolov8s/yolov8_nms_postprocess' means swapping models just works.
     try:
         model_side = int(in_info.shape[0])
         if model_side != NN_SIZE:
-            print(f"[WARN] Model wants {model_side}px input but NN_SIZE={NN_SIZE}. "
+            log(f"[WARN] Model wants {model_side}px input but NN_SIZE={NN_SIZE}. "
                   f"Set NN_SIZE={model_side} or every box will be misplaced.")
     except Exception:
         pass
@@ -484,7 +700,7 @@ def shutdown_hailo():
         if _hailo["activated"] is not None:
             _hailo["activated"].__exit__(None, None, None)
     except Exception as e:
-        print(f"[hailo] shutdown warning: {e}")
+        log(f"[hailo] shutdown warning: {e}")
 
 
 def run_inference(nn_frame):
@@ -555,159 +771,9 @@ def parse_detections(raw, scale, pad_x, pad_y, frame_w, frame_h, conf_thresh, tr
                 out.append((class_id, name, (x1, y1, x2, y2), conf))
 
             except Exception as e:
-                print(f"[parse] {e}")
+                log(f"[parse] {e}")
 
     return out
-
-
-# ============================================================
-# CAMERA
-# ============================================================
-def camera_cmd():
-    cmd = [
-        "rpicam-vid",
-        "--codec", "mjpeg",
-        "--inline", "--nopreview", "--flush",
-        "--width", str(CAM_WIDTH),
-        "--height", str(CAM_HEIGHT),
-        "--framerate", str(CAM_FRAMERATE),
-        "--timeout", "0",
-        "--output", "-",
-    ]
-    if CAM_DENOISE:
-        cmd += ["--denoise", CAM_DENOISE]
-    if CAM_AUTOFOCUS:
-        cmd += ["--autofocus-mode", CAM_AUTOFOCUS]
-    if CAM_AUTOFOCUS == "manual" and CAM_LENS_POS:
-        cmd += ["--lens-position", CAM_LENS_POS]
-    if CAM_EV != "":
-        cmd += ["--ev", CAM_EV]
-    if CAM_SHUTTER != "":
-        cmd += ["--shutter", CAM_SHUTTER]
-    if CAM_GAIN != "":
-        cmd += ["--gain", CAM_GAIN]
-    if CAM_HFLIP:
-        cmd += ["--hflip"]
-    if CAM_VFLIP:
-        cmd += ["--vflip"]
-    if CAM_EXTRA_ARGS:
-        cmd += CAM_EXTRA_ARGS.split()
-    return cmd
-
-
-_ROTATE_MAP = {0: None, 90: cv2.ROTATE_90_CLOCKWISE,
-               180: cv2.ROTATE_180, 270: cv2.ROTATE_90_COUNTERCLOCKWISE}
-ROTATE = _ROTATE_MAP.get(ROTATE_DEGREES)
-if ROTATE_DEGREES not in _ROTATE_MAP:
-    print(f"[WARN] ROTATE_DEGREES={ROTATE_DEGREES} invalid (use 0/90/180/270). Ignoring.")
-
-
-def capture_loop():
-    """rpicam-vid -> decode -> NPU -> detect_q.
-
-    Wrapped so a camera hiccup restarts the pipeline with backoff instead of
-    killing the thread and leaving a live page serving a frozen image.
-    """
-    backoff = 1.0
-    frame_index = 0
-    last_raw = []
-
-    while not _shutdown.is_set():
-        proc = None
-        try:
-            cmd = camera_cmd()
-            print(f"[camera] {' '.join(cmd)}")
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL, bufsize=0)
-            print("[camera] capture started")
-            backoff = 1.0
-            buf = b""
-
-            while not _shutdown.is_set():
-                chunk = proc.stdout.read(1 << 20)
-                if not chunk:
-                    if proc.poll() is not None:
-                        raise RuntimeError(f"rpicam-vid exited {proc.returncode}")
-                    continue
-                buf += chunk
-
-                # Drain to the NEWEST complete JPEG sitting in the buffer.
-                #
-                # rpicam-vid never stops producing. If decode + inference ever
-                # falls behind 30fps — even briefly — taking the oldest frame
-                # each pass means we render an ever-growing backlog of stale
-                # video and the latency never recovers. Anything older than the
-                # last complete frame is worthless, so throw it away.
-                jpg = None
-                stale = 0
-                while True:
-                    start = buf.find(b"\xff\xd8")
-                    if start == -1:
-                        break
-                    end = buf.find(b"\xff\xd9", start + 2)
-                    if end == -1:
-                        break
-                    if jpg is not None:
-                        stale += 1
-                    jpg = buf[start:end + 2]
-                    buf = buf[end + 2:]
-
-                if jpg is None:
-                    if len(buf) > 8 << 20:
-                        print("[camera] resyncing — no complete JPEG in 8MB")
-                        buf = b""
-                    continue
-
-                if stale:
-                    with STATS._lock:
-                        STATS.dropped += stale
-
-                frame = cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR)
-                if frame is None:
-                    continue
-                if ROTATE is not None:
-                    frame = cv2.rotate(frame, ROTATE)
-
-                frame_index += 1
-                infer_s = 0.0
-
-                if frame_index % INFER_EVERY_N == 0:
-                    nn_frame, scale, pad_x, pad_y = letterbox(frame)
-                    t0 = time.perf_counter()
-                    raw = run_inference(nn_frame)
-                    infer_s = time.perf_counter() - t0
-                    last_raw = (raw, scale, pad_x, pad_y)
-
-                STATS.frame(infer_s)
-
-                if not last_raw:
-                    continue
-
-                if detect_q.full():
-                    with STATS._lock:
-                        STATS.dropped += 1
-                    try:
-                        detect_q.get_nowait()      # drop the stale one, keep latest
-                    except queue.Empty:
-                        pass
-                detect_q.put((frame, last_raw))
-
-        except Exception as e:
-            with STATS._lock:
-                STATS.capture_errors += 1
-            print(f"[camera] error: {e} — restarting in {backoff:.0f}s")
-            _shutdown.wait(backoff)
-            backoff = min(backoff * 2, 30.0)
-        finally:
-            if proc is not None:
-                try:
-                    proc.terminate()
-                    proc.wait(timeout=3)
-                except Exception:
-                    try:
-                        proc.kill()
-                    except Exception:
-                        pass
 
 
 # ============================================================
@@ -765,10 +831,17 @@ def draw_track(frame, track, show_labels, show_ids, show_trails):
     cv2.putText(frame, text, (x1 + 4, ty - 1), FONT, scale, (10, 10, 10), 1, cv2.LINE_AA)
 
 
-def draw_hud(frame, live_count):
-    fps = STATS.fps()
-    ms = STATS.infer_ms()
-    text = f"{fps:4.1f} fps | {ms:4.1f} ms | {live_count} obj"
+def draw_hud(frame, stats, live_count, label=None, detecting=True):
+    bits = []
+    if label:
+        bits.append(label)
+    bits.append(f"{stats.fps():4.1f} fps")
+    if detecting:
+        bits.append(f"{stats.infer_ms():4.1f} ms")
+        bits.append(f"{live_count} obj")
+    else:
+        bits.append("no detection")
+    text = " | ".join(bits)
     cv2.putText(frame, text, (10, 24), FONT, 0.6, (0, 0, 0), 4, cv2.LINE_AA)
     cv2.putText(frame, text, (10, 24), FONT, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
@@ -783,76 +856,12 @@ def draw_roi(frame, poly_px):
 
 
 # ============================================================
-# RENDER THREAD
+# EVENTS / SNAPSHOTS / WEBHOOK  — one set, shared by every camera
 # ============================================================
-TRACKER = Tracker(iou_threshold=TRACK_IOU, max_misses=TRACK_MAX_MISSES,
-                  min_hits=TRACK_MIN_HITS, trail_len=TRAIL_LENGTH)
-
 EVENTS = EventLog(EVENT_DB, EVENT_RETENTION_D, enabled=EVENT_LOG)
 SNAPSHOTS = SnapshotStore(SNAPSHOT_DIR, SNAPSHOT_MAX_FILES, SNAPSHOT_COOLDOWN,
                           enabled=SNAPSHOT_ON_DETECT)
 HOOK = Webhook(WEBHOOK_URL)
-
-_last_logged = {}
-_live_tracks_json = []
-_live_lock = threading.Lock()
-
-
-def render_loop():
-    global _live_tracks_json
-
-    while not _shutdown.is_set():
-        try:
-            frame, (raw, scale, pad_x, pad_y) = detect_q.get(timeout=2.0)
-        except queue.Empty:
-            continue
-
-        h, w = frame.shape[:2]
-        conf_thresh, tracked_ids = SETTINGS.detect_opts()
-        (show_labels, show_ids, show_trails,
-         show_hud, show_roi, confirmed_only, quality) = SETTINGS.draw_opts()
-
-        poly_px = roi_pixels(w, h)
-
-        dets = parse_detections(raw, scale, pad_x, pad_y, w, h,
-                                conf_thresh, tracked_ids)
-
-        if poly_px is not None:
-            dets = [d for d in dets
-                    if in_roi((d[2][0] + d[2][2]) / 2, (d[2][1] + d[2][3]) / 2, poly_px)]
-
-        if TRACK_ENABLED:
-            tracks = TRACKER.update(dets)
-            visible = [t for t in tracks if (t.confirmed or not confirmed_only)]
-            _handle_track_events(tracks)
-        else:
-            # Tracking off: synthesise throwaway objects so drawing is uniform.
-            visible = [_FakeTrack(cid, name, box, conf)
-                       for cid, name, box, conf in dets]
-
-        if show_roi:
-            draw_roi(frame, poly_px)
-
-        for t in visible:
-            draw_track(frame, t, show_labels, show_ids, show_trails)
-
-        if show_hud:
-            draw_hud(frame, len(visible))
-
-        t0 = time.perf_counter()
-        ok, jpg = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-        STATS.encode(time.perf_counter() - t0)
-        if not ok:
-            continue
-
-        data = jpg.tobytes()
-        PUBLISHER.publish(data)
-
-        with _live_lock:
-            _live_tracks_json = [t.to_dict() for t in visible]
-
-        if TRACK_ENABLED:
-            _handle_snapshots(visible, data)
 
 
 class _FakeTrack:
@@ -876,40 +885,359 @@ class _FakeTrack:
                 "confirmed": True}
 
 
-def _handle_track_events(tracks):
-    now = time.time()
+# ============================================================
+# CAMERA PIPELINE — capture, infer, track, annotate, publish
+# ============================================================
+class CameraPipeline:
+    """Everything that used to be a module global, scoped to one camera.
 
-    for t in tracks:
-        if t.confirmed and not t.notified:
-            t.notified = True
-            with STATS._lock:
-                STATS.total_tracks += 1
-                STATS.class_counts[t.class_name] += 1
-            EVENTS.track_started(t)
-            HOOK.notify(t)
-            if DETECTION_LOG and now - _last_logged.get(t.class_id, 0) > DETECTION_LOG_COOLDOWN:
-                _last_logged[t.class_id] = now
-                x1, y1, x2, y2 = (int(v) for v in t.box)
-                print(f"[detect] {t.class_name} #{t.id} {t.conf:.0%} "
-                      f"at ({x1},{y1})-({x2},{y2})")
+    Two of these run side by side. They share the NPU (run_inference holds a
+    lock), the event log, the snapshot store and the detection Settings; they do
+    not share frames, queues, trackers, stats or publishers, so a stall on one
+    camera cannot drop frames on the other.
+    """
 
-    for t in TRACKER.drain_finished():
-        EVENTS.track_ended(t)
-        if DETECTION_LOG:
-            print(f"[detect] {t.class_name} #{t.id} left after {t.duration:.1f}s "
-                  f"({t.hits} frames, peak {t.max_conf:.0%})")
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.index = cfg.index
+        self.name = cfg.name
+        self.detect = bool(cfg.detect)
+        self.stats = Stats()
+        self.publisher = FramePublisher()
+        self.queue = queue.Queue(maxsize=2)
+        self.tracker = Tracker(iou_threshold=TRACK_IOU,
+                               max_misses=TRACK_MAX_MISSES,
+                               min_hits=TRACK_MIN_HITS,
+                               trail_len=TRAIL_LENGTH)
+        self._live_tracks = []
+        self._live_lock = threading.Lock()
+        self._last_logged = {}
+
+    def __repr__(self):
+        return f"<CameraPipeline {self.name} {self.cfg.describe()}>"
+
+    # ------------------------------------------------------------------
+
+    def start(self):
+        for target, role in ((self.capture_loop, "capture"),
+                             (self.render_loop, "render")):
+            threading.Thread(target=target, daemon=True,
+                             name=f"{self.name}-{role}").start()
+
+    def set_detect(self, enabled):
+        """Flip inference on or off for this camera without a restart."""
+        enabled = bool(enabled)
+        if enabled == self.detect:
+            return False
+        self.detect = enabled
+        self.cfg.detect = enabled
+        log(f"[{self.name}] detection {'on' if enabled else 'off'}")
+        return True
+
+    # ------------------------------------------------------------------
+    # CAPTURE
+    # ------------------------------------------------------------------
+
+    def capture_loop(self):
+        """rpicam-vid -> decode -> NPU -> self.queue.
+
+        Wrapped so a camera hiccup restarts this camera's pipeline with backoff
+        instead of killing the thread and leaving a live page serving a frozen
+        image. One camera restarting does not disturb the other.
+        """
+        backoff = 1.0
+        frame_index = 0
+        last_raw = None
+        rotate = self.cfg.rotate_flag
+
+        while not _shutdown.is_set():
+            proc = None
+            try:
+                cmd = self.cfg.rpicam_cmd()
+                log(f"[{self.name}] {' '.join(cmd)}")
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                        stderr=subprocess.DEVNULL, bufsize=0)
+                log(f"[{self.name}] capture started")
+                backoff = 1.0
+                buf = b""
+
+                while not _shutdown.is_set():
+                    chunk = proc.stdout.read(1 << 20)
+                    if not chunk:
+                        if proc.poll() is not None:
+                            raise RuntimeError(f"rpicam-vid exited {proc.returncode}")
+                        continue
+                    buf += chunk
+
+                    # Drain to the NEWEST complete JPEG sitting in the buffer.
+                    #
+                    # rpicam-vid never stops producing. If decode + inference
+                    # ever falls behind — and with two cameras sharing one NPU
+                    # it will, briefly — taking the oldest frame each pass means
+                    # rendering an ever-growing backlog of stale video that
+                    # never catches up. Anything older than the last complete
+                    # frame is worthless, so throw it away.
+                    jpg = None
+                    stale = 0
+                    while True:
+                        start = buf.find(b"\xff\xd8")
+                        if start == -1:
+                            break
+                        end = buf.find(b"\xff\xd9", start + 2)
+                        if end == -1:
+                            break
+                        if jpg is not None:
+                            stale += 1
+                        jpg = buf[start:end + 2]
+                        buf = buf[end + 2:]
+
+                    if jpg is None:
+                        if len(buf) > 8 << 20:
+                            log(f"[{self.name}] resyncing — no complete JPEG in 8MB")
+                            buf = b""
+                        continue
+
+                    if stale:
+                        with self.stats._lock:
+                            self.stats.dropped += stale
+
+                    frame = cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR)
+                    if frame is None:
+                        continue
+                    if rotate is not None:
+                        frame = cv2.rotate(frame, rotate)
+
+                    frame_index += 1
+                    infer_s = 0.0
+
+                    if not self.detect:
+                        # Stream only. Drop whatever the last inference said so
+                        # stale boxes can't outlive the switch.
+                        last_raw = None
+                    elif frame_index % self.cfg.infer_every_n == 0:
+                        nn_frame, scale, pad_x, pad_y = letterbox(frame)
+                        t0 = time.perf_counter()
+                        raw = run_inference(nn_frame)
+                        infer_s = time.perf_counter() - t0
+                        last_raw = (raw, scale, pad_x, pad_y)
+
+                    self.stats.frame(infer_s)
+
+                    if self.detect and last_raw is None:
+                        continue        # nothing to draw until the first inference
+
+                    if self.queue.full():
+                        with self.stats._lock:
+                            self.stats.dropped += 1
+                        try:
+                            self.queue.get_nowait()     # drop stale, keep latest
+                        except queue.Empty:
+                            pass
+                    self.queue.put((frame, last_raw))
+
+            except Exception as e:
+                with self.stats._lock:
+                    self.stats.capture_errors += 1
+                log(f"[{self.name}] error: {e} — restarting in {backoff:.0f}s")
+                _shutdown.wait(backoff)
+                backoff = min(backoff * 2, 30.0)
+            finally:
+                if proc is not None:
+                    try:
+                        proc.terminate()
+                        proc.wait(timeout=3)
+                    except Exception:
+                        try:
+                            proc.kill()
+                        except Exception:
+                            pass
+
+    # ------------------------------------------------------------------
+    # RENDER
+    # ------------------------------------------------------------------
+
+    def render_loop(self):
+        while not _shutdown.is_set():
+            try:
+                frame, payload = self.queue.get(timeout=2.0)
+            except queue.Empty:
+                continue
+
+            h, w = frame.shape[:2]
+            conf_thresh, tracked_ids = SETTINGS.detect_opts()
+            (show_labels, show_ids, show_trails,
+             show_hud, show_roi, confirmed_only, quality) = SETTINGS.draw_opts()
+
+            poly_px = roi_pixels(w, h)
+
+            if payload is None:
+                # Detection is off for this camera. Retire anything the tracker
+                # is still holding so the event log closes those rows out
+                # instead of leaving them open forever.
+                if self.tracker.tracks:
+                    self.tracker.reset()
+                    for t in self.tracker.drain_finished():
+                        EVENTS.track_ended(t, camera=self.index)
+                visible = []
+            else:
+                raw, scale, pad_x, pad_y = payload
+                dets = parse_detections(raw, scale, pad_x, pad_y, w, h,
+                                        conf_thresh, tracked_ids)
+
+                if poly_px is not None:
+                    dets = [d for d in dets
+                            if in_roi((d[2][0] + d[2][2]) / 2,
+                                      (d[2][1] + d[2][3]) / 2, poly_px)]
+
+                if TRACK_ENABLED:
+                    tracks = self.tracker.update(dets)
+                    visible = [t for t in tracks
+                               if (t.confirmed or not confirmed_only)]
+                    self._handle_track_events(tracks)
+                else:
+                    # Tracking off: synthesise throwaway objects so drawing is
+                    # uniform.
+                    visible = [_FakeTrack(cid, name, box, conf)
+                               for cid, name, box, conf in dets]
+
+            if show_roi and payload is not None:
+                draw_roi(frame, poly_px)
+
+            for t in visible:
+                draw_track(frame, t, show_labels, show_ids, show_trails)
+
+            if show_hud:
+                draw_hud(frame, self.stats, len(visible),
+                         label=self.name if len(CAMS) > 1 else None,
+                         detecting=self.detect)
+
+            t0 = time.perf_counter()
+            ok, jpg = cv2.imencode(".jpg", frame,
+                                   [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+            self.stats.encode(time.perf_counter() - t0)
+            if not ok:
+                continue
+
+            data = jpg.tobytes()
+            self.publisher.publish(data)
+
+            with self._live_lock:
+                self._live_tracks = [dict(t.to_dict(), camera=self.index)
+                                     for t in visible]
+
+            if payload is not None and TRACK_ENABLED:
+                self._handle_snapshots(visible, data)
+
+    # ------------------------------------------------------------------
+    # EVENTS
+    # ------------------------------------------------------------------
+
+    def _handle_track_events(self, tracks):
+        now = time.time()
+
+        for t in tracks:
+            if t.confirmed and not t.notified:
+                t.notified = True
+                with self.stats._lock:
+                    self.stats.total_tracks += 1
+                    self.stats.class_counts[t.class_name] += 1
+                EVENTS.track_started(t, camera=self.index)
+                HOOK.notify(t, extra={"camera": self.index})
+                if (DETECTION_LOG and now - self._last_logged.get(t.class_id, 0)
+                        > DETECTION_LOG_COOLDOWN):
+                    self._last_logged[t.class_id] = now
+                    x1, y1, x2, y2 = (int(v) for v in t.box)
+                    log(f"[detect] {self.name} {t.class_name} #{t.id} "
+                          f"{t.conf:.0%} at ({x1},{y1})-({x2},{y2})")
+
+        for t in self.tracker.drain_finished():
+            EVENTS.track_ended(t, camera=self.index)
+            if DETECTION_LOG:
+                log(f"[detect] {self.name} {t.class_name} #{t.id} left after "
+                      f"{t.duration:.1f}s ({t.hits} frames, peak {t.max_conf:.0%})")
+
+    def _handle_snapshots(self, tracks, jpeg_bytes):
+        if not SNAPSHOTS.enabled:
+            return
+        for t in tracks:
+            if getattr(t, "confirmed", False) and not getattr(t, "snapshot_taken", True):
+                t.snapshot_taken = True
+                path = SNAPSHOTS.maybe_save(t.class_name, t.id, jpeg_bytes,
+                                            camera=self.index)
+                if path:
+                    EVENTS.attach_snapshot(t.id, path, camera=self.index)
+                    log(f"[snapshot] {os.path.basename(path)}")
+
+    # ------------------------------------------------------------------
+    # READERS
+    # ------------------------------------------------------------------
+
+    def live_tracks(self):
+        with self._live_lock:
+            return list(self._live_tracks)
+
+    def stats_dict(self):
+        s = self.stats
+        with s._lock:
+            frames, dropped = s.frames, s.dropped
+            errors, total_tracks = s.capture_errors, s.total_tracks
+            class_counts = dict(s.class_counts)
+
+        return {
+            "index": self.index,
+            "name": self.name,
+            "sensor": self.cfg.sensor,
+            "detect": self.detect,
+            "resolution": f"{self.cfg.width}x{self.cfg.height}",
+            "framerate": self.cfg.framerate,
+            "rotate": self.cfg.rotate,
+            "infer_every_n": self.cfg.infer_every_n,
+            "fps": round(s.fps(), 2),
+            "inference_ms": round(s.infer_ms(), 2),
+            "encode_ms": round(s.encode_ms(), 2),
+            "frames": frames,
+            "dropped": dropped,
+            "capture_errors": errors,
+            "live_tracks": len(self.live_tracks()),
+            "total_tracks": total_tracks,
+            "class_counts": class_counts,
+            "healthy": s.healthy(),
+        }
+
+    def config_dict(self):
+        return {**self.cfg.to_dict(), "detect": self.detect}
+
+    def shutdown(self):
+        try:
+            self.tracker.reset()
+            for t in self.tracker.drain_finished():
+                EVENTS.track_ended(t, camera=self.index)
+        except Exception:
+            pass
+        # Wake any client blocked on wait_for so /video generators can exit.
+        self.publisher.publish(self.publisher.latest() or b"")
 
 
-def _handle_snapshots(tracks, jpeg_bytes):
-    if not SNAPSHOTS.enabled:
-        return
-    for t in tracks:
-        if getattr(t, "confirmed", False) and not getattr(t, "snapshot_taken", True):
-            t.snapshot_taken = True
-            path = SNAPSHOTS.maybe_save(t.class_name, t.id, jpeg_bytes)
-            if path:
-                EVENTS.attach_snapshot(t.id, path)
-                print(f"[snapshot] {os.path.basename(path)}")
+# ---------------- registry ----------------
+
+def start_cameras(configs):
+    for cfg in configs:
+        CAMS[cfg.index] = CameraPipeline(cfg)
+    for cam in CAMS.values():
+        cam.start()
+    return CAMS
+
+
+def primary_cam():
+    """Camera 0 if it exists, otherwise the lowest-numbered one configured."""
+    return next(iter(CAMS.values()), None)
+
+
+def get_cam(index):
+    try:
+        return CAMS.get(int(index))
+    except (TypeError, ValueError):
+        return None
 
 
 # ============================================================
@@ -924,19 +1252,35 @@ def _no_cache(resp):
     return resp
 
 
+def _pick_cam(index):
+    """None/blank means the primary camera; anything else must resolve."""
+    if index is None or index == "":
+        return primary_cam()
+    return get_cam(index)
+
+
+def _config_snapshot():
+    cfg = SETTINGS.snapshot()
+    cfg["cameras"] = [c.config_dict() for c in CAMS.values()]
+    return cfg
+
+
 @app.route("/")
 def index():
     _, tracked_ids = SETTINGS.detect_opts()
-    return webui.render(COCO_CLASSES, CSS_COLORS, tracked_ids)
+    return webui.render(COCO_CLASSES, CSS_COLORS, tracked_ids,
+                        [c.config_dict() for c in CAMS.values()])
 
 
-def mjpeg_stream():
+# ---------------- video ----------------
+
+def mjpeg_stream(cam):
     seq = 0
     min_interval = (1.0 / STREAM_MAX_FPS) if STREAM_MAX_FPS > 0 else 0.0
     last_sent = 0.0
 
     while not _shutdown.is_set():
-        seq, data = PUBLISHER.wait_for(seq, timeout=5.0)
+        seq, data = cam.publisher.wait_for(seq, timeout=5.0)
         if data is None:
             continue
         if min_interval:
@@ -951,14 +1295,22 @@ def mjpeg_stream():
 
 
 @app.route("/video")
-def video():
-    return Response(mjpeg_stream(),
+@app.route("/video/<int:index>")
+def video(index=None):
+    cam = _pick_cam(index)
+    if cam is None:
+        return "No such camera", 404
+    return Response(mjpeg_stream(cam),
                     mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.route("/snapshot")
-def snapshot():
-    data = PUBLISHER.latest()
+@app.route("/snapshot/<int:index>")
+def snapshot(index=None):
+    cam = _pick_cam(index)
+    if cam is None:
+        return "No such camera", 404
+    data = cam.publisher.latest()
     if data is None:
         return "No frame yet", 503
     return Response(data, mimetype="image/jpeg")
@@ -966,13 +1318,20 @@ def snapshot():
 
 @app.route("/api/snapshot", methods=["POST"])
 def api_snapshot():
-    data = PUBLISHER.latest()
+    body = request.get_json(silent=True) or {}
+    cam = _pick_cam(body.get("camera", request.args.get("camera")))
+    if cam is None:
+        return jsonify({"saved": None, "error": "no such camera"}), 404
+
+    data = cam.publisher.latest()
     if data is None:
         return jsonify({"saved": None, "error": "no frame"}), 503
+
     store = SNAPSHOTS if SNAPSHOTS.enabled else SnapshotStore(
         SNAPSHOT_DIR, SNAPSHOT_MAX_FILES, cooldown_s=0.0, enabled=True)
-    path = store.maybe_save("manual", 0, data)
-    return jsonify({"saved": os.path.basename(path) if path else None})
+    path = store.maybe_save("manual", 0, data, camera=cam.index)
+    return jsonify({"saved": os.path.basename(path) if path else None,
+                    "camera": cam.index})
 
 
 @app.route("/snapshots")
@@ -985,55 +1344,114 @@ def snapshots_file(name):
     return send_from_directory(SNAPSHOT_DIR, name)
 
 
+# ---------------- config ----------------
+
+def _apply_camera_config(spec):
+    """Per-camera settings from the UI.
+
+    Accepts either {"1": {"detect": true}} or [{"index": 1, "detect": true}].
+    """
+    if not spec:
+        return []
+
+    if isinstance(spec, dict):
+        items = list(spec.items())
+    elif isinstance(spec, list):
+        items = [(item.get("index"), item) for item in spec
+                 if isinstance(item, dict)]
+    else:
+        return []
+
+    changed = []
+    for key, value in items:
+        cam = get_cam(key)
+        if cam is None or not isinstance(value, dict):
+            continue
+        if "detect" in value and cam.set_detect(value["detect"]):
+            changed.append(f"{cam.name}.detect")
+    return changed
+
+
 @app.route("/api/config", methods=["GET", "POST"])
 def api_config():
     if request.method == "GET":
-        return jsonify(SETTINGS.snapshot())
+        return jsonify(_config_snapshot())
 
     data = request.get_json(silent=True) or {}
     changed = SETTINGS.apply(data)
+    changed += _apply_camera_config(data.get("cameras"))
     if changed:
-        print(f"[config] updated: {', '.join(sorted(set(changed)))}")
+        log(f"[config] updated: {', '.join(sorted(set(changed)))}")
     return jsonify({"ok": True, "changed": sorted(set(changed)),
-                    "config": SETTINGS.snapshot()})
+                    "config": _config_snapshot()})
 
+
+@app.route("/cameras")
+def cameras():
+    return jsonify([c.config_dict() for c in CAMS.values()])
+
+
+# ---------------- tracks + stats ----------------
 
 @app.route("/tracks")
-def tracks():
-    with _live_lock:
-        return jsonify(_live_tracks_json)
+@app.route("/tracks/<int:index>")
+def tracks(index=None):
+    if index is None:
+        out = []
+        for cam in CAMS.values():
+            out.extend(cam.live_tracks())
+        return jsonify(out)
+
+    cam = get_cam(index)
+    if cam is None:
+        return jsonify({"error": "no such camera"}), 404
+    return jsonify(cam.live_tracks())
 
 
 @app.route("/stats")
-def stats():
-    with STATS._lock:
-        class_counts = dict(STATS.class_counts)
-        frames, dropped = STATS.frames, STATS.dropped
-        errors, total_tracks = STATS.capture_errors, STATS.total_tracks
-        started = STATS.started_at
+@app.route("/stats/<int:index>")
+def stats(index=None):
+    if index is not None:
+        cam = get_cam(index)
+        if cam is None:
+            return jsonify({"error": "no such camera"}), 404
+        return jsonify(cam.stats_dict())
 
-    with _live_lock:
-        live = len(_live_tracks_json)
+    per_cam = [c.stats_dict() for c in CAMS.values()]
+    detecting = [c for c in per_cam if c["detect"]]
 
+    class_counts = defaultdict(int)
+    for c in per_cam:
+        for name, n in c["class_counts"].items():
+            class_counts[name] += n
+
+    # Top-level numbers are the whole rig; "cameras" has the per-camera detail.
     return jsonify({
-        "fps": round(STATS.fps(), 2),
-        "inference_ms": round(STATS.infer_ms(), 2),
-        "encode_ms": round(STATS.encode_ms(), 2),
-        "frames": frames,
-        "dropped": dropped,
-        "capture_errors": errors,
-        "live_tracks": live,
-        "total_tracks": total_tracks,
-        "class_counts": class_counts,
-        "uptime_s": round(time.time() - started, 1),
-        "healthy": STATS.healthy(),
-        "model": os.path.basename(_hailo["path"] or "?"),
-        "camera": f"{CAM_WIDTH}x{CAM_HEIGHT}@{CAM_FRAMERATE}",
-        "clients_seq": PUBLISHER.seq,
-        "webhook": {"sent": HOOK.sent, "failed": HOOK.failed} if HOOK.enabled else None,
         **SETTINGS.snapshot(),
+        "fps": round(sum(c["fps"] for c in per_cam), 2),
+        "inference_ms": round(
+            sum(c["inference_ms"] for c in detecting) / len(detecting), 2)
+            if detecting else 0.0,
+        "encode_ms": round(
+            sum(c["encode_ms"] for c in per_cam) / len(per_cam), 2)
+            if per_cam else 0.0,
+        "frames": sum(c["frames"] for c in per_cam),
+        "dropped": sum(c["dropped"] for c in per_cam),
+        "capture_errors": sum(c["capture_errors"] for c in per_cam),
+        "live_tracks": sum(c["live_tracks"] for c in per_cam),
+        "total_tracks": sum(c["total_tracks"] for c in per_cam),
+        "class_counts": dict(class_counts),
+        "uptime_s": round(time.time() - STARTED_AT, 1),
+        "healthy": bool(per_cam) and all(c["healthy"] for c in per_cam),
+        "model": os.path.basename(_hailo["path"] or "?"),
+        "camera": ", ".join(f'{c["name"]} {c["resolution"]}@{c["framerate"]}'
+                            for c in per_cam),
+        "cameras": per_cam,
+        "webhook": {"sent": HOOK.sent, "failed": HOOK.failed} if HOOK.enabled else None,
     })
 
+
+# ---------------- events ----------------
 
 @app.route("/events")
 def events():
@@ -1041,68 +1459,79 @@ def events():
         limit=int(request.args.get("limit", 50)),
         class_name=request.args.get("class"),
         since=request.args.get("since"),
+        camera=request.args.get("camera"),
     ))
 
 
 @app.route("/events/summary")
 def events_summary():
-    return jsonify(EVENTS.summary(since=request.args.get("since")))
+    return jsonify(EVENTS.summary(since=request.args.get("since"),
+                                  camera=request.args.get("camera")))
 
 
 @app.route("/events.csv")
 def events_csv():
     buf = io.StringIO()
-    EVENTS.write_csv(buf)
+    EVENTS.write_csv(buf, camera=request.args.get("camera"))
     return Response(
         buf.getvalue(), mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=hailo-events.csv"})
 
 
+# ---------------- monitoring ----------------
+
 @app.route("/metrics")
 def metrics():
-    """Plain-text Prometheus exposition — point a scraper at it if you like."""
-    with STATS._lock:
-        class_counts = dict(STATS.class_counts)
-        frames, dropped = STATS.frames, STATS.dropped
-        errors, total_tracks = STATS.capture_errors, STATS.total_tracks
-    with _live_lock:
-        live = len(_live_tracks_json)
+    """Plain-text Prometheus exposition — point a scraper at it if you like.
 
-    lines = [
-        "# HELP hailo_fps Frames per second through the pipeline",
-        "# TYPE hailo_fps gauge",
-        f"hailo_fps {STATS.fps():.3f}",
-        "# HELP hailo_inference_ms Mean NPU inference time",
-        "# TYPE hailo_inference_ms gauge",
-        f"hailo_inference_ms {STATS.infer_ms():.3f}",
-        "# HELP hailo_frames_total Frames processed",
-        "# TYPE hailo_frames_total counter",
-        f"hailo_frames_total {frames}",
-        "# HELP hailo_frames_dropped_total Frames dropped under backpressure",
-        "# TYPE hailo_frames_dropped_total counter",
-        f"hailo_frames_dropped_total {dropped}",
-        "# HELP hailo_capture_errors_total Camera pipeline restarts",
-        "# TYPE hailo_capture_errors_total counter",
-        f"hailo_capture_errors_total {errors}",
-        "# HELP hailo_live_tracks Objects currently tracked",
-        "# TYPE hailo_live_tracks gauge",
-        f"hailo_live_tracks {live}",
-        "# HELP hailo_tracks_total Tracks confirmed since start",
-        "# TYPE hailo_tracks_total counter",
-        f"hailo_tracks_total {total_tracks}",
-        "# HELP hailo_detections_total Confirmed tracks by class",
-        "# TYPE hailo_detections_total counter",
-    ]
-    for name, count in sorted(class_counts.items()):
-        lines.append(f'hailo_detections_total{{class="{name}"}} {count}')
+    Every series carries a camera label. `sum by (class) (hailo_detections_total)`
+    gets you the old single-camera number back.
+    """
+    per_cam = [c.stats_dict() for c in CAMS.values()]
+    lines = []
+
+    def block(name, help_text, mtype, samples):
+        lines.append(f"# HELP {name} {help_text}")
+        lines.append(f"# TYPE {name} {mtype}")
+        lines.extend(samples)
+
+    def series(name, help_text, mtype, key, fmt="{:.3f}"):
+        block(name, help_text, mtype,
+              [f'{name}{{camera="{c["index"]}"}} ' + fmt.format(c[key])
+               for c in per_cam])
+
+    series("hailo_fps", "Frames per second through the pipeline", "gauge", "fps")
+    series("hailo_inference_ms", "Mean NPU inference time", "gauge", "inference_ms")
+    series("hailo_frames_total", "Frames processed", "counter", "frames", "{:d}")
+    series("hailo_frames_dropped_total", "Frames dropped under backpressure",
+           "counter", "dropped", "{:d}")
+    series("hailo_capture_errors_total", "Camera pipeline restarts",
+           "counter", "capture_errors", "{:d}")
+    series("hailo_live_tracks", "Objects currently tracked", "gauge",
+           "live_tracks", "{:d}")
+    series("hailo_tracks_total", "Tracks confirmed since start", "counter",
+           "total_tracks", "{:d}")
+    series("hailo_camera_detecting", "1 when the NPU is running on this camera",
+           "gauge", "detect", "{:d}")
+
+    block("hailo_detections_total", "Confirmed tracks by class", "counter",
+          [f'hailo_detections_total{{class="{name}",camera="{c["index"]}"}} {n}'
+           for c in per_cam
+           for name, n in sorted(c["class_counts"].items())])
 
     return Response("\n".join(lines) + "\n", mimetype="text/plain; version=0.0.4")
 
 
 @app.route("/healthz")
 def healthz():
-    ok = STATS.healthy()
-    return jsonify({"ok": ok, "fps": round(STATS.fps(), 2)}), (200 if ok else 503)
+    per_cam = [c.stats_dict() for c in CAMS.values()]
+    ok = bool(per_cam) and all(c["healthy"] for c in per_cam)
+    return jsonify({
+        "ok": ok,
+        "fps": round(sum(c["fps"] for c in per_cam), 2),
+        "cameras": {c["name"]: {"healthy": c["healthy"], "fps": c["fps"]}
+                    for c in per_cam},
+    }), (200 if ok else 503)
 
 
 # ============================================================
@@ -1113,39 +1542,58 @@ def parse_args():
         description="Real-time object detection and tracking on Hailo-8L.",
         epilog="Any CONFIG constant can also be set via an env var of the same name.")
     p.add_argument("--port", type=int, help="HTTP port (default 8080)")
+    p.add_argument("--cameras",
+                   help='which CSI cameras to run: "auto" (default), "0", "0,1"')
+    p.add_argument("--detect-cameras",
+                   help="comma-separated cameras to run the NPU on, e.g. 0,1 "
+                        "(default: camera 0 only)")
     p.add_argument("--classes", help="comma-separated class filter, e.g. cat,dog")
     p.add_argument("--conf", type=float, help="confidence threshold 0-1")
     p.add_argument("--model", help="path to .hef")
-    p.add_argument("--rotate", type=int, choices=[0, 90, 180, 270])
-    p.add_argument("--width", type=int)
-    p.add_argument("--height", type=int)
-    p.add_argument("--fps", type=int, dest="framerate")
+    p.add_argument("--rotate", type=int, choices=[0, 90, 180, 270],
+                   help="rotation for camera 0 (use CAMN_ROTATE for the rest)")
+    p.add_argument("--width", type=int, help="capture width for camera 0")
+    p.add_argument("--height", type=int, help="capture height for camera 0")
+    p.add_argument("--fps", type=int, dest="framerate",
+                   help="capture framerate for camera 0")
     p.add_argument("--no-track", action="store_true", help="disable ID tracking")
     p.add_argument("--no-events", action="store_true", help="disable the event log")
     p.add_argument("--snapshots", action="store_true", help="save a JPEG per new detection")
     p.add_argument("--webhook", help="POST detections to this URL")
     p.add_argument("--list-classes", action="store_true")
+    p.add_argument("--list-cameras", action="store_true",
+                   help="show what libcamera can see, then exit")
     return p.parse_args()
 
 
 def apply_args(a):
-    """CLI flags win over env, which wins over the defaults in this file."""
-    global HTTP_PORT, ROTATE, ROTATE_DEGREES, CAM_WIDTH, CAM_HEIGHT
-    global CAM_FRAMERATE, TRACK_ENABLED
+    """CLI flags win over env, which wins over the defaults in this file.
+
+    Camera flags are pushed back into os.environ rather than applied directly,
+    because CameraConfig resolves from the environment — one precedence rule
+    to reason about instead of two.
+    """
+    global HTTP_PORT, TRACK_ENABLED, CAMERAS_SPEC
 
     if a.port:
         HTTP_PORT = a.port
     if a.model:
         HEF_CANDIDATES.insert(0, a.model)
+    if a.cameras:
+        CAMERAS_SPEC = a.cameras
     if a.rotate is not None:
-        ROTATE_DEGREES = a.rotate
-        ROTATE = _ROTATE_MAP.get(a.rotate)
+        os.environ["CAM_ROTATE"] = str(a.rotate)
     if a.width:
-        CAM_WIDTH = a.width
+        os.environ["CAM_WIDTH"] = str(a.width)
     if a.height:
-        CAM_HEIGHT = a.height
+        os.environ["CAM_HEIGHT"] = str(a.height)
     if a.framerate:
-        CAM_FRAMERATE = a.framerate
+        os.environ["CAM_FRAMERATE"] = str(a.framerate)
+    if a.detect_cameras is not None:
+        wanted = {c.strip() for c in a.detect_cameras.split(",") if c.strip()}
+        for i in range(8):
+            prefix = "CAM_" if i == 0 else f"CAM{i}_"
+            os.environ[prefix + "DETECT"] = "1" if str(i) in wanted else "0"
     if a.no_track:
         TRACK_ENABLED = False
     if a.no_events:
@@ -1192,13 +1640,13 @@ def _shutdown_all(signum=None, _frame=None):
     if signum:
         print(f"\n[main] signal {signum} — shutting down")
     _shutdown.set()
-    PUBLISHER.publish(PUBLISHER.latest() or b"")   # wake any blocked clients
-    try:
-        TRACKER.reset()
-        for t in TRACKER.drain_finished():
-            EVENTS.track_ended(t)
-    except Exception:
-        pass
+
+    for cam in CAMS.values():
+        try:
+            cam.shutdown()
+        except Exception:
+            pass
+
     EVENTS.close()          # flushes pending rows before we go
     HOOK.close()
     shutdown_hailo()
@@ -1222,23 +1670,31 @@ def main():
             print(f"{i:3d}  {name}")
         return
 
+    if args.list_cameras:
+        found = detect_cameras()
+        if not found:
+            print("No cameras reported by libcamera.")
+            return
+        for i, sensor in found:
+            print(f"{i:3d}  {sensor}")
+        return
+
     apply_args(args)
 
     signal.signal(signal.SIGTERM, _shutdown_all)
     signal.signal(signal.SIGINT, _shutdown_all)
 
+    configs = build_camera_configs()
     init_hailo()
-
-    threading.Thread(target=capture_loop, daemon=True, name="capture").start()
-    threading.Thread(target=render_loop, daemon=True, name="render").start()
+    start_cameras(configs)
 
     cfg = SETTINGS.snapshot()
     tracking = ", ".join(cfg["tracked_classes"]) if cfg["tracked_classes"] else "all 80 classes"
 
     print("\n  Hailo Tracker")
     print(f"  Model:    {os.path.basename(_hailo['path'])}")
-    print(f"  Camera:   {CAM_WIDTH}x{CAM_HEIGHT} @ {CAM_FRAMERATE}fps, "
-          f"AF={CAM_AUTOFOCUS}, rotate={ROTATE_DEGREES}deg")
+    for c in configs:
+        print(f"  {c.name}:     {c.describe()}")
     print(f"  Tracking: {tracking}  (conf >= {cfg['conf_thresh']:.0%})")
     print(f"  IDs:      {'on' if TRACK_ENABLED else 'off'}   "
           f"Events: {'on' if EVENTS.enabled else 'off'}   "

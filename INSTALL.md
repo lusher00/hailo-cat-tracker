@@ -6,7 +6,7 @@ Check first:
 
 ```bash
 hailortcli fw-control identify     # should print Hailo-8 or Hailo-8L
-rpicam-vid --list-cameras          # should list your camera
+rpicam-vid --list-cameras          # should list your camera(s)
 ```
 
 ## Quick install
@@ -58,16 +58,28 @@ A healthy startup logs:
 ```
 [hailo] Loading /home/pi/hailo-tracker/yolov8s.hef ...
 [hailo] Ready — in yolov8s/input_layer1 (640, 640, 3), out yolov8s/yolov8_nms_postprocess
-[camera] rpicam-vid --codec mjpeg --inline --nopreview ...
-[camera] capture started
+[cam0] rpicam-vid --camera 0 --codec mjpeg --inline --nopreview ...
+[cam0] capture started
 
   Hailo Tracker
   Model:    yolov8s.hef
-  Camera:   1280x720 @ 30fps, AF=continuous, rotate=0deg
+  cam0:     1280x720@30, imx708, AF=continuous, detecting
   Tracking: all 80 classes  (conf >= 40%)
   IDs:      on   Events: on   Snapshots: off
 
   http://192.168.1.139:8080
+```
+
+With a second module on the other CSI port you get a line per camera, and the extra one comes up as plain video until you turn detection on for it:
+
+```
+[cam0] capture started
+[cam1] capture started
+
+  Hailo Tracker
+  Model:    yolov8s.hef
+  cam0:     1280x720@30, imx708, AF=continuous, detecting
+  cam1:     1280x720@30, imx477, stream only
 ```
 
 ## Configuration
@@ -162,6 +174,7 @@ Don't install into a venv. The Hailo package targets system site-packages, and p
 ```bash
 rpicam-vid --list-cameras
 rpicam-vid -t 3000 -o /tmp/test.jpg --encoding jpg
+python3 hailo_tracker.py --list-cameras     # what the tracker itself sees
 ```
 
 If the camera works standalone but not in the service, something else is holding it — check for another instance:
@@ -170,6 +183,19 @@ If the camera works standalone but not in the service, something else is holding
 sudo systemctl stop hailo-tracker
 pgrep -a rpicam
 ```
+
+**Only one of two cameras comes up**
+
+Cameras are auto-detected at startup, so `--list-cameras` is the first check: if it reports one, the Pi isn't seeing the module and this is a ribbon or `config.txt` problem, not a tracker one. A single explicit `dtoverlay=` with `camera_auto_detect=0` will hide the other port.
+
+If both are listed but only one streams, force them and read that camera's own log lines:
+
+```bash
+CAMERAS=0,1 python3 hailo_tracker.py
+sudo journalctl -u hailo-tracker | grep '\[cam1\]'
+```
+
+`rpicam-vid exited 1` right after `[cam1] rpicam-vid ...` is almost always a flag that sensor doesn't accept. Autofocus is already dropped automatically for sensors with no focus actuator (IMX477, IMX219, OV5647); for anything else set `CAM1_AUTOFOCUS=` empty. Note that `--camera N` needs `rpicam-apps` — on an older `libcamera-apps` build the flag doesn't exist and the second camera can't start.
 
 ### Service runs but the page is unreachable
 
@@ -189,15 +215,24 @@ Check the frame counter is moving:
 curl -s http://localhost:8080/stats | python3 -m json.tool
 ```
 
-- `capture_errors` climbing means the camera pipeline is restarting — check `journalctl` for the reason.
+- `capture_errors` climbing means a camera pipeline is restarting — check `journalctl` for the reason.
 - `frames` static with `healthy: false` means capture has stalled; restart the service.
 - Lots of `dropped` is normal under load and only means the renderer is behind; the newest frame always wins.
+
+The top-level numbers are totals across every camera. To tell which one is unhappy, read the `cameras` array, or ask a single camera directly:
+
+```bash
+curl -s http://localhost:8080/stats | python3 -c \
+  'import json,sys; [print(c["name"], c["fps"], "fps", "healthy" if c["healthy"] else "STALLED") \
+   for c in json.load(sys.stdin)["cameras"]]'
+curl -s http://localhost:8080/stats/1 | python3 -m json.tool
+```
 
 ### Boxes are in the wrong place
 
 - Mirrored across the diagonal → set `BOX_ORDER=yxyx`.
 - Uniformly offset or scaled → `NN_SIZE` doesn't match the model's input; the startup log warns about this.
-- Rotated → set `ROTATE_DEGREES`, not `CAM_HFLIP`/`CAM_VFLIP`.
+- Rotated → set `CAM_ROTATE` (or `CAM1_ROTATE` for the second camera), not `CAM_HFLIP`/`CAM_VFLIP`. The old `ROTATE_DEGREES` name still works for camera 0.
 
 ### Testing changes without a Pi
 
@@ -206,4 +241,4 @@ pip install flask opencv-python numpy
 ./tests/run_tests.sh
 ```
 
-Fakes the camera and the NPU, runs everything else for real.
+Fakes two cameras and the NPU, runs everything else for real — including camera enumeration, per-camera config, and switching detection on and off at runtime.

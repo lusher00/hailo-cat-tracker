@@ -94,11 +94,16 @@ if [ ! -f "${CONF_FILE}" ]; then
 #TRACK_MIN_HITS=3        # frames before an object counts as real
 #TRAIL_LENGTH=48
 
-# ---------- camera ----------
+# ---------- cameras ----------
+# Which CSI cameras to run: auto (whatever libcamera reports), or a list.
+#CAMERAS=auto               # auto | 0 | 0,1
+
+# Camera 0. These are also the fallback for every other camera, so set the
+# common values here and only override what differs below.
 #CAM_WIDTH=1280
 #CAM_HEIGHT=720
 #CAM_FRAMERATE=30
-#CAM_AUTOFOCUS=continuous   # continuous | manual | auto
+#CAM_AUTOFOCUS=continuous   # continuous | manual | auto | blank for none
 #CAM_LENS_POSITION=         # dioptres, required if AF is manual (0 = infinity)
 #CAM_SHUTTER=20000          # microseconds; blank = auto exposure
 #CAM_GAIN=2                 # blank = auto
@@ -107,8 +112,25 @@ if [ ! -f "${CONF_FILE}" ]; then
 #CAM_HFLIP=false
 #CAM_VFLIP=false
 #CAM_EXTRA_ARGS=            # anything else to pass to rpicam-vid
+#CAM_ROTATE=0               # 0, 90, 180 or 270 degrees clockwise
+#CAM_DETECT=true            # run the NPU on this camera
+#CAM_INFER_EVERY_N=1
 
-# 0, 90, 180 or 270 degrees clockwise
+# Camera 1, if you have a second module on the other CSI port. Anything left
+# unset here inherits camera 0's value. Detection is the exception: additional
+# cameras come up as plain video, because two cameras sharing one NPU halve the
+# inference rate each one gets. Flip it here or from the web UI.
+#CAM1_WIDTH=1280
+#CAM1_HEIGHT=720
+#CAM1_FRAMERATE=30
+#CAM1_AUTOFOCUS=            # dropped automatically for sensors with no AF
+#CAM1_SHUTTER=20000
+#CAM1_GAIN=2
+#CAM1_ROTATE=0
+#CAM1_DETECT=false
+#CAM1_INFER_EVERY_N=1
+
+# Pre-multi-camera name for CAM_ROTATE, still honoured.
 #ROTATE_DEGREES=0
 
 # ---------- display ----------

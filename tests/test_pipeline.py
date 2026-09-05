@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""End-to-end test with a fake camera and a fake NPU.
+"""End-to-end test with fake cameras and a fake NPU.
 
-Everything between them is the real code: JPEG demux, letterbox, detection
-parsing, the tracker, annotation, the frame publisher, the event log, and the
-whole Flask surface.
+Everything between them is the real code: camera enumeration, JPEG demux,
+letterbox, detection parsing, the tracker, annotation, the frame publisher, the
+event log, and the whole Flask surface.
+
+Two cameras are started (the fake answers --list-cameras with an imx708 on port
+0 and an imx477 on port 1), so the per-camera split is under test and not just
+the single-camera path.
 
 Run from the project root:  python3 tests/test_pipeline.py
 """
@@ -44,6 +48,15 @@ def get(path, timeout=10):
 def get_json(path, timeout=10):
     status, body, _ = get(path, timeout)
     return status, json.loads(body.decode())
+
+
+def status_of(path, timeout=10):
+    """Status code only, without raising on 4xx."""
+    try:
+        with urllib.request.urlopen(BASE + path, timeout=timeout) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
 
 
 def post_json(path, payload, timeout=10):
@@ -87,6 +100,9 @@ def main():
         "TRACK_MIN_HITS": "2",
         "CAM_WIDTH": "1280",
         "CAM_HEIGHT": "720",
+        # CAMERAS is deliberately left unset so the auto-enumeration path runs.
+        # CAM1_* must reach camera 1 and nothing else.
+        "CAM1_FRAMERATE": "15",
         "DETECTION_LOG": "true",
         "PYTHONUNBUFFERED": "1",
     })
@@ -126,6 +142,7 @@ def main():
         status, body, _ = get("/")
         check("GET / returns the UI", status == 200 and b"Hailo Tracker" in body)
         check("UI inlines the COCO list", b'"toothbrush"' in body)
+        check("UI inlines the camera list", b'"imx477"' in body and b'"imx708"' in body)
 
         status, st = get_json("/stats")
         check("GET /stats", status == 200)
@@ -134,6 +151,45 @@ def main():
         check("fps is plausible", 1.0 < st["fps"] < 120.0, f"fps={st['fps']:.1f}")
         check("no camera restarts", st["capture_errors"] == 0,
               f"errors={st['capture_errors']}")
+
+        # ---------------- cameras ----------------
+        print("\nCamera enumeration")
+        status, cams = get_json("/cameras")
+        check("GET /cameras", status == 200)
+        check("both CSI cameras were auto-detected", len(cams) == 2,
+              f"{len(cams)} found")
+
+        by_index = {c["index"]: c for c in cams}
+        check("camera 0 is the imx708",
+              by_index.get(0, {}).get("sensor") == "imx708",
+              str(by_index.get(0, {}).get("sensor")))
+        check("camera 1 is the imx477",
+              by_index.get(1, {}).get("sensor") == "imx477",
+              str(by_index.get(1, {}).get("sensor")))
+        check("CAM1_* reaches camera 1 and leaves camera 0 alone",
+              by_index[1]["framerate"] == 15 and by_index[0]["framerate"] == 30,
+              f"cam0={by_index[0]['framerate']}fps cam1={by_index[1]['framerate']}fps")
+        check("camera 1 comes up as stream only",
+              by_index[0]["detect"] is True and by_index[1]["detect"] is False)
+
+        status, st1 = get_json("/stats/1")
+        check("GET /stats/1", status == 200)
+        check("camera 1 is producing frames", st1["frames"] > 10,
+              f"frames={st1['frames']}")
+        check("camera 1 runs no inference while detection is off",
+              st1["inference_ms"] == 0.0, f"{st1['inference_ms']} ms")
+
+        check("unknown camera index 404s", status_of("/stats/7") == 404)
+
+        status, jpeg1, _ = get("/snapshot/1")
+        check("GET /snapshot/1 returns a JPEG",
+              status == 200 and jpeg1[:2] == b"\xff\xd8", f"{len(jpeg1)} bytes")
+        _, jpeg0, _ = get("/snapshot/0")
+        check("the two cameras publish different frames", jpeg0 != jpeg1,
+              f"cam0={len(jpeg0)}B cam1={len(jpeg1)}B")
+
+        counts1 = _count_frames_two_clients(BASE + "/video/1", seconds=3.0)
+        check("camera 1 streams over /video/1", min(counts1) > 5, str(counts1))
 
         # ---------------- detection + tracking ----------------
         print("\nDetection and tracking")
@@ -200,6 +256,45 @@ def main():
         check("out-of-range config is rejected", cfg["conf_thresh"] <= 1.0,
               f"conf={cfg['conf_thresh']}")
 
+        # ---------------- detection on the second camera ----------------
+        print("\nDetection on camera 1")
+        status, res = post_json("/api/config", {"cameras": {"1": {"detect": True}}})
+        check("POST /api/config turns camera 1's NPU on",
+              status == 200 and "cam1.detect" in res["changed"],
+              str(res.get("changed")))
+        time.sleep(5)
+
+        _, st1b = get_json("/stats/1")
+        check("camera 1 is now running inference", st1b["inference_ms"] > 0,
+              f"{st1b['inference_ms']} ms")
+        _, st0b = get_json("/stats/0")
+        check("camera 0 keeps running while camera 1 infers",
+              st0b["healthy"] and st0b["fps"] > 1.0, f"fps={st0b['fps']}")
+
+        _, all_tracks = get_json("/tracks")
+        seen = sorted({t.get("camera") for t in all_tracks})
+        check("tracks now arrive from both cameras", seen == [0, 1], str(seen))
+
+        _, t1 = get_json("/tracks/1")
+        check("camera 1 tracks its moving block",
+              any(t["class"] == "cat" for t in t1),
+              str(sorted({t["class"] for t in t1})))
+        check("camera 1 does not inherit camera 0's scene",
+              not any(t["class"] == "person" for t in t1),
+              str(sorted({t["class"] for t in t1})))
+
+        _, t0 = get_json("/tracks/0")
+        check("per-camera track IDs stay independent",
+              bool(t0) and bool(t1), f"cam0={len(t0)} cam1={len(t1)}")
+
+        status, res = post_json("/api/config", {"cameras": {"1": {"detect": False}}})
+        time.sleep(3)
+        _, t1_off = get_json("/tracks/1")
+        check("turning camera 1 back off clears its boxes", len(t1_off) == 0,
+              f"{len(t1_off)} tracks remain")
+        post_json("/api/config", {"cameras": {"1": {"detect": True}}})
+        time.sleep(3)
+
         # ---------------- images ----------------
         print("\nImage output")
         status, jpeg, headers = get("/snapshot")
@@ -232,6 +327,14 @@ def main():
                   all(k in e for k in ("class", "started_at", "max_conf", "started_iso")),
                   str(sorted(e.keys()))[:90])
 
+        check("events record which camera saw the object",
+              all("camera" in e for e in events),
+              str(sorted({e.get("camera") for e in events})))
+        _, ev1 = get_json("/events?camera=1")
+        check("events can be filtered by camera",
+              bool(ev1) and all(e["camera"] == 1 for e in ev1),
+              f"{len(ev1)} rows from cam1")
+
         status, summary = get_json("/events/summary")
         check("GET /events/summary", status == 200 and isinstance(summary, dict),
               str(list(summary.keys())))
@@ -244,6 +347,9 @@ def main():
         status, snaps = get_json("/snapshots")
         check("snapshots were saved on detection", len(snaps) >= 1,
               f"{len(snaps)} files")
+        check("snapshot filenames are camera-tagged",
+              any("_cam1_" in f for f in snaps) and any("_cam0_" in f for f in snaps),
+              str(sorted(snaps)[:3]))
 
         # ---------------- metrics + health ----------------
         print("\nMonitoring endpoints")
@@ -251,6 +357,10 @@ def main():
         check("GET /metrics", status == 200 and b"hailo_fps" in metrics)
         check("metrics include per-class counters",
               b"hailo_detections_total{class=" in metrics)
+        check("metrics carry a camera label",
+              b'hailo_fps{camera="0"}' in metrics and b'hailo_fps{camera="1"}' in metrics)
+        check("detection counters are per camera",
+              b'hailo_detections_total{class="cat",camera="1"}' in metrics)
         check("metrics are Prometheus text",
               headers["Content-Type"].startswith("text/plain"))
 
@@ -272,6 +382,20 @@ def main():
         log_text = open(log_path).read()
         check("no tracebacks in the log", "Traceback" not in log_text)
         check("detections were logged to stdout", "[detect]" in log_text)
+        check("detections are attributed to a camera", "[detect] cam1 " in log_text)
+
+        cam0_cmd = next((l for l in log_text.splitlines()
+                         if l.startswith("[cam0] rpicam-vid")), "")
+        cam1_cmd = next((l for l in log_text.splitlines()
+                         if l.startswith("[cam1] rpicam-vid")), "")
+        check("each camera is started with its own --camera index",
+              "--camera 0" in cam0_cmd and "--camera 1" in cam1_cmd)
+        check("autofocus is kept for the imx708",
+              "--autofocus-mode" in cam0_cmd, cam0_cmd[:110])
+        check("autofocus flags are dropped for the imx477",
+              "--autofocus-mode" not in cam1_cmd, cam1_cmd[:110])
+        check("camera 1 honours its own framerate",
+              "--framerate 15" in cam1_cmd and "--framerate 30" in cam0_cmd)
 
         # ---- summary ----
         print("\n" + "=" * 58)
