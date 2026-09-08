@@ -28,6 +28,7 @@ name, or a --flag on the command line. Precedence: CLI > env > file default.
 import os
 import re
 import sys
+import select
 import csv
 import io
 import json
@@ -206,7 +207,7 @@ class CameraConfig:
             elif key in _CAM_SECONDARY_DEFAULTS:
                 fallback = _CAM_SECONDARY_DEFAULTS[key]
             else:
-                fallback = getattr(base, key)
+                fallback = base._inheritable[key]
 
             names = [prefix + key.upper()]
             if self.index == 0 and key in _CAM0_ALIASES:
@@ -220,6 +221,13 @@ class CameraConfig:
                     break
             setattr(self, key, value)
 
+        # What later cameras inherit: the values as resolved from config, before
+        # any sensor-specific fixups below. Inheriting the *fixed up* values
+        # would leak one camera's hardware limits onto another — an IMX477 on
+        # port 0 would strip autofocus from an IMX708 on port 1, parking its
+        # lens wherever it happened to be.
+        self._inheritable = {k: getattr(self, k) for k in _CAM_DEFAULTS}
+
         if self.rotate not in _ROTATE_MAP:
             log(f"[WARN] cam{self.index}: rotate={self.rotate} invalid "
                   f"(use 0/90/180/270) — ignoring")
@@ -228,10 +236,16 @@ class CameraConfig:
         self.infer_every_n = max(1, int(self.infer_every_n))
 
         # An IMX477 has no autofocus. Drop the flag rather than let rpicam-vid
-        # refuse to start — unless the operator asked for it explicitly, in
-        # which case they get to see the error.
-        if (self.autofocus and "autofocus" not in self._explicit
-                and self.sensor in NO_AUTOFOCUS_SENSORS):
+        # refuse to start, even when it was asked for explicitly: there is no
+        # useful way to honour it on hardware with no focus actuator, and
+        # CAM_AUTOFOCUS doubles as the default for every other camera, so an
+        # explicit value there is not a statement about this sensor. Say so
+        # rather than silently discarding what the operator wrote.
+        if self.autofocus and self.sensor in NO_AUTOFOCUS_SENSORS:
+            if "autofocus" in self._explicit:
+                print(f"[WARN] cam{self.index}: {self.sensor} has no focus "
+                      f"actuator — ignoring autofocus={self.autofocus!r} "
+                      f"(rpicam-vid would refuse to start)")
             self.autofocus = ""
 
     @property
@@ -374,6 +388,11 @@ SNAPSHOT_DIR       = _env("SNAPSHOT_DIR", os.path.join(HERE, "snapshots"))
 SNAPSHOT_MAX_FILES = _env("SNAPSHOT_MAX_FILES", 500, int)
 SNAPSHOT_COOLDOWN  = _env("SNAPSHOT_COOLDOWN", 30.0, float)
 WEBHOOK_URL        = _env("WEBHOOK_URL", "")
+
+# How long a camera may sit open without producing a frame before saying so.
+# Long enough to cover a slow sensor coming up, short enough that a camera
+# which is never going to work announces itself rather than staying blank.
+CAPTURE_STALL_S = _env("CAPTURE_STALL_S", 12.0, float)
 
 DETECTION_LOG          = _env("DETECTION_LOG", True, bool)
 DETECTION_LOG_COOLDOWN = _env("DETECTION_LOG_COOLDOWN", 10.0, float)
@@ -912,6 +931,7 @@ class CameraPipeline:
         self._live_tracks = []
         self._live_lock = threading.Lock()
         self._last_logged = {}
+        self._stderr_tail = deque(maxlen=20)
 
     def __repr__(self):
         return f"<CameraPipeline {self.name} {self.cfg.describe()}>"
@@ -938,6 +958,38 @@ class CameraPipeline:
     # CAPTURE
     # ------------------------------------------------------------------
 
+    def _drain_stderr(self, proc):
+        """Keep rpicam-vid's own account of itself.
+
+        This used to be sent to DEVNULL, which made the two failure modes
+        indistinguishable: a camera that opens and streams, and a camera that
+        opens, says exactly why it cannot stream, and then sits there silently
+        forever. The second one presents as a panel that never fills in and a
+        log with nothing wrong in it.
+
+        Also has to be drained rather than merely redirected — a full stderr
+        pipe would block rpicam-vid mid-frame.
+        """
+        try:
+            for raw in iter(proc.stderr.readline, b""):
+                line = raw.decode("utf-8", "replace").rstrip()
+                if not line:
+                    continue
+                self._stderr_tail.append(line)
+                low = line.lower()
+                if "error" in low or "fail" in low or "not supported" in low:
+                    log(f"[{self.name}] rpicam-vid: {line}")
+        except Exception:
+            pass
+
+    def _log_stderr_tail(self, why):
+        if not self._stderr_tail:
+            log(f"[{self.name}] {why}, and rpicam-vid printed nothing at all")
+            return
+        log(f"[{self.name}] {why}. Last words from rpicam-vid:")
+        for line in list(self._stderr_tail):
+            log(f"[{self.name}]   {line}")
+
     def capture_loop(self):
         """rpicam-vid -> decode -> NPU -> self.queue.
 
@@ -956,12 +1008,35 @@ class CameraPipeline:
                 cmd = self.cfg.rpicam_cmd()
                 log(f"[{self.name}] {' '.join(cmd)}")
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                        stderr=subprocess.DEVNULL, bufsize=0)
+                                        stderr=subprocess.PIPE, bufsize=0)
+                self._stderr_tail.clear()
+                threading.Thread(target=self._drain_stderr, args=(proc,),
+                                 daemon=True,
+                                 name=f"{self.name}-stderr").start()
                 log(f"[{self.name}] capture started")
                 backoff = 1.0
                 buf = b""
+                opened_at = time.time()
+                saw_frame = False
+                stalled = False
 
                 while not _shutdown.is_set():
+                    # Wait with a timeout rather than blocking in read(). A
+                    # camera that opens but never sends anything would
+                    # otherwise park this thread forever: no frames, no error,
+                    # nothing in the log, and no way to notice except by
+                    # spotting that the stream never fills in.
+                    if not select.select([proc.stdout], [], [], 2.0)[0]:
+                        if proc.poll() is not None:
+                            raise RuntimeError(f"rpicam-vid exited {proc.returncode}")
+                        if not saw_frame and not stalled and \
+                                time.time() - opened_at > CAPTURE_STALL_S:
+                            stalled = True
+                            self._log_stderr_tail(
+                                f"no frames {CAPTURE_STALL_S:.0f}s after "
+                                f"rpicam-vid started")
+                        continue
+
                     chunk = proc.stdout.read(1 << 20)
                     if not chunk:
                         if proc.poll() is not None:
@@ -996,6 +1071,11 @@ class CameraPipeline:
                             log(f"[{self.name}] resyncing — no complete JPEG in 8MB")
                             buf = b""
                         continue
+
+                    if not saw_frame:
+                        saw_frame = True
+                        if stalled:
+                            log(f"[{self.name}] frames arrived after all")
 
                     if stale:
                         with self.stats._lock:
@@ -1039,6 +1119,7 @@ class CameraPipeline:
                 with self.stats._lock:
                     self.stats.capture_errors += 1
                 log(f"[{self.name}] error: {e} — restarting in {backoff:.0f}s")
+                self._log_stderr_tail("capture failed")
                 _shutdown.wait(backoff)
                 backoff = min(backoff * 2, 30.0)
             finally:

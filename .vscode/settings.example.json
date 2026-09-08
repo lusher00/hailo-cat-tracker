@@ -1,0 +1,59 @@
+// Terminal profiles cannot be loaded from workspace settings: VS Code
+// ignores terminal.integrated.profiles.* from .vscode/settings.json,
+// because a cloned repo could otherwise run arbitrary commands the
+// moment you opened a terminal. They have to live in USER settings.
+//
+// You do not need to copy this by hand:
+//     ./tools/install_keybindings.py            # dry run
+//     ./tools/install_keybindings.py --apply    # install
+//
+// That merges these into your user settings.json, leaving your own
+// settings, comments and any other project's profiles untouched.
+{
+    "terminal.integrated.profiles.osx": {
+        "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+        },
+        "pi: shell": {
+            "path": "ssh",
+            "args": [
+                "-t",
+                "pi5-0",
+                "cd ~/hailo-tracker && exec $SHELL -l"
+            ],
+            "icon": "circuit-board",
+            "color": "terminal.ansiGreen"
+        },
+        "pi: run": {
+            "path": "ssh",
+            "args": [
+                "-t",
+                "pi5-0",
+                "sudo systemctl stop hailo-tracker; cd ~/hailo-tracker && python3 hailo_tracker.py"
+            ],
+            "icon": "rocket",
+            "color": "terminal.ansiYellow"
+        },
+        "pi: run (both cameras detecting)": {
+            "path": "ssh",
+            "args": [
+                "-t",
+                "pi5-0",
+                "sudo systemctl stop hailo-tracker; cd ~/hailo-tracker && python3 hailo_tracker.py --cameras 0,1 --detect-cameras 0,1"
+            ],
+            "icon": "device-camera",
+            "color": "terminal.ansiCyan"
+        },
+        "pi: journal": {
+            "path": "ssh",
+            "args": [
+                "-t",
+                "pi5-0",
+                "journalctl -u hailo-tracker -f -n 100"
+            ],
+            "icon": "output",
+            "color": "terminal.ansiBlue"
+        }
+    }
+}

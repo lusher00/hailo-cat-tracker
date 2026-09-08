@@ -52,13 +52,29 @@ PAGE = """<!DOCTYPE html>
 
   .stage { background: #000; border: 1px solid var(--line); border-radius: 6px;
            overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
-  .stage img { width: 100%; max-height: 78vh; object-fit: contain;
-               display: block; background: #000; }
+  /* min-height matters: an <img> whose stream never delivers has no intrinsic
+     height, so a dead camera used to collapse to nothing and the panel simply
+     vanished — which reads as "the second camera isn't there" rather than
+     "the second camera is broken". */
+  .shot { position: relative; background: #000; }
+  .stage img { width: 100%; min-height: 220px; max-height: 78vh;
+               object-fit: contain; display: block; background: #000; }
   .stages:not(.solo) .stage img { max-height: 46vh; }
+  .dead { position: absolute; inset: 0; display: none; flex-direction: column;
+          align-items: center; justify-content: center; gap: 6px;
+          color: #e2534a; text-align: center; padding: 16px; font-size: 12px; }
+  .dead b { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .dead span { color: var(--dim); max-width: 32ch; line-height: 1.5; }
+  .stage.stalled .dead { display: flex; }
+  .badge.bad { color: #e2534a; border-color: #e2534a; }
 
+  /* The identity bar goes ABOVE the picture, not below it. A caption under a
+     dead camera's zero-height image lands directly on top of the *next*
+     camera's picture and reads as its label — which is exactly how the imx477
+     appeared to be labelling the imx708's stream. */
   .cap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
          padding: 6px 9px; background: var(--panel);
-         border-top: 1px solid var(--line); font-size: 11px; color: var(--dim); }
+         border-bottom: 1px solid var(--line); font-size: 11px; color: var(--dim); }
   .cap .who { color: var(--fg); font-weight: 600; }
   .cap .sensor { color: var(--dim); }
   .cap .num { color: var(--fg); }
@@ -210,10 +226,12 @@ PAGE = """<!DOCTYPE html>
 <script>
 const COCO = __COCO__;
 const COLORS = __COLORS__;
-const CAMERAS = __CAMERAS__;
+let CAMERAS = __CAMERAS__;
 let selected = new Set(__TRACKED__);
 let detect = {};                 // camera index -> bool
 let pushTimer = null;
+let camsDirty = false;           // has the user actually touched a detect box?
+let camSig = null;               // server's camera list, to notice it changing
 
 CAMERAS.forEach(c => { detect[c.index] = !!c.detect; });
 
@@ -238,13 +256,23 @@ function renderStages() {
 
   CAMERAS.forEach(c => {
     const stage = el('figure', 'stage');
+    stage.id = 'stage' + c.index;
 
+    const cap = el('figcaption', 'cap');
+    const shot = el('div', 'shot');
     const img = document.createElement('img');
     img.src = '/video/' + c.index;
     img.alt = 'Live feed from ' + c.name;
-    stage.appendChild(img);
+    shot.appendChild(img);
 
-    const cap = el('figcaption', 'cap');
+    const dead = el('div', 'dead');
+    dead.appendChild(el('b', null, 'no signal'));
+    dead.appendChild(el('span', null,
+      c.name + ' (' + (c.sensor || 'unknown sensor') + ') is configured but has '
+      + 'not produced a frame. Check the log: journalctl -u hailo-tracker -b | grep '
+      + c.name));
+    shot.appendChild(dead);
+
     cap.appendChild(el('span', 'who', c.name));
     if (c.sensor) cap.appendChild(el('span', 'sensor', c.sensor));
     cap.appendChild(el('span', 'sensor', c.width + '×' + c.height));
@@ -264,7 +292,8 @@ function renderStages() {
     snap.onclick = () => saveSnapshot(c.index);
     cap.appendChild(snap);
 
-    stage.appendChild(cap);
+    stage.appendChild(cap);      // identity first, then the picture
+    stage.appendChild(shot);
     box.appendChild(stage);
   });
 }
@@ -280,11 +309,28 @@ function renderCamRows() {
     const cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = !!detect[c.index];
-    cb.onchange = () => { detect[c.index] = cb.checked; queuePush(); };
+    cb.onchange = () => {
+      detect[c.index] = cb.checked;
+      camsDirty = true;
+      queuePush();
+    };
     label.appendChild(name);
     label.appendChild(cb);
     box.appendChild(label);
   });
+}
+
+// The server's camera list changed under us — a restart that found different
+// hardware, most likely. Rebuild the panels rather than leaving a stale view
+// that silently disagrees with what is actually running.
+async function refreshCameras() {
+  try {
+    const c = await (await fetch('/api/config')).json();
+    CAMERAS = c.cameras || CAMERAS;
+    if (!camsDirty) CAMERAS.forEach(cam => { detect[cam.index] = !!cam.detect; });
+    renderStages();
+    renderCamRows();
+  } catch (e) { /* next poll will try again */ }
 }
 
 async function saveSnapshot(index) {
@@ -341,9 +387,6 @@ async function pushConfig() {
   // Empty selection means "everything" server-side, so send the full list
   // explicitly when the user has picked some but not all.
   const all = selected.size === COCO.length;
-  const cams = {};
-  CAMERAS.forEach(c => { cams[c.index] = {detect: !!detect[c.index]}; });
-
   const body = {
     conf_thresh: clampConf(),
     tracked_classes: all ? [] : [...selected].map(i => COCO[i]),
@@ -352,8 +395,22 @@ async function pushConfig() {
     show_trails: document.getElementById('showTrails').checked,
     confirmed_only: document.getElementById('confirmedOnly').checked,
     show_roi: document.getElementById('showRoi').checked,
-    cameras: cams,
   };
+
+  // Only send camera state when the user actually toggled a detect box.
+  //
+  // This used to go out with every config push, which meant any settings
+  // change — moving the confidence, clicking a class chip — re-asserted this
+  // tab's idea of which cameras should be detecting. A tab left open across a
+  // restart, or one that loaded while a camera was missing, would then quietly
+  // switch detection off on the server the next time you touched anything.
+  if (camsDirty) {
+    const cams = {};
+    CAMERAS.forEach(c => { cams[c.index] = {detect: !!detect[c.index]}; });
+    body.cameras = cams;
+    camsDirty = false;
+  }
+
   try {
     await fetch('/api/config', {
       method: 'POST',
@@ -398,15 +455,40 @@ async function poll() {
     document.getElementById('sTracks').textContent = s.total_tracks.toLocaleString();
     document.getElementById('dot').className = 'dot' + (s.healthy ? '' : ' stale');
 
-    (s.cameras || []).forEach(c => {
+    const list = s.cameras || [];
+    const sig = list.map(c => c.index + ':' + c.sensor + ':' + c.detect).join(',');
+    if (sig !== camSig) {
+      const shape = list.map(c => c.index + ':' + c.sensor).join(',');
+      const known = CAMERAS.map(c => c.index + ':' + c.sensor).join(',');
+      camSig = sig;
+      if (shape !== known) { refreshCameras(); return setTimeout(poll, 2000); }
+      // Same cameras, detection changed elsewhere — resync the checkboxes.
+      if (!camsDirty) {
+        list.forEach(c => { detect[c.index] = !!c.detect; });
+        renderCamRows();
+      }
+    }
+
+    list.forEach(c => {
       const f = document.getElementById('capFps' + c.index);
       if (f) f.textContent = c.fps.toFixed(1);
+
+      // A camera with no frames is the one thing this page must never render
+      // as an absence. Say it is broken, and say where to look.
+      const stage = document.getElementById('stage' + c.index);
+      if (stage) stage.classList.toggle('stalled', !c.healthy);
+
       const b = document.getElementById('capBadge' + c.index);
       if (b) {
-        b.className = 'badge ' + (c.detect ? 'on' : 'off');
-        b.textContent = c.detect
-          ? c.inference_ms.toFixed(0) + ' ms · ' + c.live_tracks + ' obj'
-          : 'stream';
+        if (!c.healthy) {
+          b.className = 'badge bad';
+          b.textContent = 'no signal';
+        } else {
+          b.className = 'badge ' + (c.detect ? 'on' : 'off');
+          b.textContent = c.detect
+            ? c.inference_ms.toFixed(0) + ' ms · ' + c.live_tracks + ' obj'
+            : 'stream';
+        }
       }
     });
   } catch (e) {

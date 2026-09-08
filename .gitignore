@@ -3,4 +3,16 @@ __pycache__/
 *.hef
 *.bin
 venv/
-.vscode/
+.venv/
+.DS_Store
+**/.DS_Store
+_to_delete/
+logs/
+
+# Device-owned, and excluded from rsync so a deploy never overwrites them:
+# the Pi's tuned settings, the event database, and captured frames.
+hailo-tracker.env
+events.db
+events.db-wal
+events.db-shm
+snapshots/

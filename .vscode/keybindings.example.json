@@ -1,0 +1,102 @@
+// Copy these into your own keybindings.json:
+//   Cmd+Shift+P -> "Preferences: Open Keyboard Shortcuts (JSON)"
+//
+// Same letters as balance_bot, different modifier: ⌃⌘ here, ⌃⌥ there.
+//
+// VS Code keybindings are global, not per-workspace, so the two projects
+// cannot share chords — whichever installer ran last would win everywhere, and
+// in the other project that chord names a task that does not exist, which
+// makes VS Code silently open the task picker instead of reporting anything.
+//
+// So the mnemonics carry over and the modifier says which board you are
+// talking to: ⌃⌘B is "make it live", ⌃⌘S is "sync without disturbing the
+// running service", ⌃⌘L is "pull a log off the device".
+//
+// Task labels are namespaced "pi: ..." for the same reason. The installer
+// identifies its own bindings by label, so two projects using a label like
+// "sync" would each reclaim the other's chord on every run.
+[
+    // ---------- deploy ----------
+    {
+        "key": "ctrl+cmd+b",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: sync and restart"
+    },
+    {
+        "key": "ctrl+cmd+s",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: sync"
+    },
+    {
+        "key": "ctrl+cmd+shift+b",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: clean sync and restart"
+    },
+    {
+        "key": "ctrl+cmd+l",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: get events csv"
+    },
+
+    // ---------- interactive terminals on the Pi ----------
+    // hailo_tracker.py handles SIGINT: it closes open event rows, flushes the
+    // SQLite writer and releases /dev/hailo0. Ctrl-C in a terminal profile
+    // gets there; Ctrl-C in the task panel may not.
+    {
+        "key": "ctrl+cmd+r",
+        "command": "workbench.action.terminal.newWithProfile",
+        "args": { "profileName": "pi: run" }
+    },
+    {
+        "key": "ctrl+cmd+shift+r",
+        "command": "workbench.action.terminal.newWithProfile",
+        "args": { "profileName": "pi: run (both cameras detecting)" }
+    },
+    {
+        "key": "ctrl+cmd+g",
+        "command": "workbench.action.terminal.newWithProfile",
+        "args": { "profileName": "pi: shell" }
+    },
+
+    // ---------- service and diagnostics ----------
+    {
+        "key": "ctrl+cmd+j",
+        "command": "workbench.action.terminal.newWithProfile",
+        "args": { "profileName": "pi: journal" }
+    },
+    {
+        "key": "ctrl+cmd+i",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: restart service"
+    },
+    {
+        "key": "ctrl+cmd+x",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: stop service"
+    },
+    {
+        "key": "ctrl+cmd+shift+u",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: status"
+    },
+    {
+        "key": "ctrl+cmd+m",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: list cameras"
+    },
+    {
+        "key": "ctrl+cmd+w",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: open web UI"
+    },
+    {
+        "key": "ctrl+cmd+t",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: run tests (local)"
+    },
+    {
+        "key": "ctrl+cmd+shift+t",
+        "command": "workbench.action.tasks.runTask",
+        "args": "pi: run tests (on the Pi)"
+    }
+]

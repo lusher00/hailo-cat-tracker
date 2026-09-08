@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_started ON events(started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_class   ON events(class, started_at DESC);
-CREATE INDEX IF NOT EXISTS idx_events_camera  ON events(camera, started_at DESC);
 """
 
 # Databases written before multi-camera support have no `camera` column. Adding
@@ -51,6 +50,14 @@ CREATE INDEX IF NOT EXISTS idx_events_camera  ON events(camera, started_at DESC)
 MIGRATIONS = [
     ("camera", "ALTER TABLE events ADD COLUMN camera INTEGER NOT NULL DEFAULT 0"),
 ]
+
+# Indexes over columns a migration may still have to add. These cannot live in
+# SCHEMA: CREATE TABLE IF NOT EXISTS is a no-op against an existing database, so
+# an index naming a new column would be created before the ALTER that adds it,
+# and the whole script fails with "no such column".
+POST_MIGRATION_SCHEMA = """
+CREATE INDEX IF NOT EXISTS idx_events_camera ON events(camera, started_at DESC);
+"""
 
 
 class EventLog:
@@ -88,11 +95,14 @@ class EventLog:
         conn = self._connect()
         try:
             conn.executescript(SCHEMA)
+
             have = {r["name"] for r in conn.execute("PRAGMA table_info(events)")}
             for column, ddl in MIGRATIONS:
                 if column not in have:
                     print(f"[events] migrating: adding {column!r} column")
                     conn.execute(ddl)
+
+            conn.executescript(POST_MIGRATION_SCHEMA)
             conn.commit()
         finally:
             conn.close()

@@ -1,0 +1,34 @@
+{
+    "files.associations": {
+        "*.env": "properties",
+        "hailo-tracker.env": "properties"
+    },
+    "terminal.integrated.defaultProfile.osx": "bash",
+
+    // hailo_platform only exists on the Pi, so Pylance flags the import here.
+    // The path shim at the top of hailo_tracker.py exists for the same reason.
+    // Downgraded rather than silenced, so a genuine typo in an import still
+    // shows up — just not as an error on a line that is correct.
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "warning",
+        "reportMissingModuleSource": "none"
+    },
+
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true
+    },
+    "search.exclude": {
+        "**/__pycache__": true,
+        "snapshots": true,
+        "logs": true,
+        "**/*.hef": true
+    }
+
+    // Terminal profiles ("pi: run, pi: shell, pi: journal") are NOT here on purpose.
+    // VS Code ignores terminal.integrated.profiles.* when it comes from
+    // workspace settings, since a cloned repo could otherwise run arbitrary
+    // commands as soon as you opened a terminal. They have to live in User
+    // settings: see .vscode/settings.example.json.
+
+}

@@ -67,6 +67,41 @@ def post_json(path, payload, timeout=10):
         return r.status, json.loads(r.read().decode())
 
 
+LEGACY_SCHEMA = """
+CREATE TABLE IF NOT EXISTS events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    track_id    INTEGER NOT NULL,
+    class       TEXT    NOT NULL,
+    started_at  REAL    NOT NULL,
+    ended_at    REAL,
+    duration_s  REAL,
+    max_conf    REAL,
+    frames      INTEGER,
+    snapshot    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_events_started ON events(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_class   ON events(class, started_at DESC);
+"""
+
+LEGACY_TRACK_ID = 424242
+
+
+def _seed_legacy_db(path):
+    """Write a database in the schema that shipped before per-camera events."""
+    import sqlite3
+    conn = sqlite3.connect(path)
+    try:
+        conn.executescript(LEGACY_SCHEMA)
+        conn.execute(
+            "INSERT INTO events (track_id, class, started_at, ended_at, "
+            "duration_s, max_conf, frames) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (LEGACY_TRACK_ID, "cat", time.time() - 90, time.time() - 85,
+             5.0, 0.91, 40))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def main():
     workdir = tempfile.mkdtemp(prefix="hailo-test-")
     bindir = os.path.join(workdir, "bin")
@@ -106,6 +141,14 @@ def main():
         "DETECTION_LOG": "true",
         "PYTHONUNBUFFERED": "1",
     })
+
+    # Seed the event database with the pre-multi-camera schema and a row.
+    # A fresh database exercises CREATE TABLE and nothing else, so the ALTER
+    # migration only gets tested if there is something to migrate. Getting this
+    # wrong bricks the service on exactly the machines that have history worth
+    # keeping.
+    legacy_db = os.path.join(workdir, "events.db")
+    _seed_legacy_db(legacy_db)
 
     print(f"\nWorkdir: {workdir}")
     print(f"Starting hailo_tracker.py on port {PORT} ...\n")
@@ -326,6 +369,13 @@ def main():
             check("event rows are well formed",
                   all(k in e for k in ("class", "started_at", "max_conf", "started_iso")),
                   str(sorted(e.keys()))[:90])
+
+        legacy = [e for e in events if e["track_id"] == LEGACY_TRACK_ID]
+        check("a pre-multi-camera database still opens", bool(legacy),
+              "the legacy row is missing — did the migration run?")
+        check("migrated rows are attributed to camera 0",
+              bool(legacy) and legacy[0]["camera"] == 0,
+              str(legacy[0].get("camera")) if legacy else "no row")
 
         check("events record which camera saw the object",
               all("camera" in e for e in events),

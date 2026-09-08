@@ -1,0 +1,158 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "pi: sync and restart",
+            "detail": "\u2303\u2318B \u2014 rsync to the Pi, restart the service, show status",
+            "type": "shell",
+            "command": "rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' --exclude='_to_delete' --exclude='.vscode' --exclude='venv' --exclude='.venv' --exclude='logs' --exclude='hailo-tracker.env' --exclude='events.db' --exclude='events.db-wal' --exclude='events.db-shm' --exclude='snapshots' --exclude='*.hef' ${workspaceFolder}/ pi5-0:~/hailo-tracker/ && ssh pi5-0 'sudo systemctl restart hailo-tracker && sleep 1 && systemctl status hailo-tracker --no-pager -l | head -20'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: sync",
+            "detail": "\u2303\u2318S \u2014 rsync to the Pi only \u2014 never touches the running service",
+            "type": "shell",
+            "command": "rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' --exclude='_to_delete' --exclude='.vscode' --exclude='venv' --exclude='.venv' --exclude='logs' --exclude='hailo-tracker.env' --exclude='events.db' --exclude='events.db-wal' --exclude='events.db-shm' --exclude='snapshots' --exclude='*.hef' ${workspaceFolder}/ pi5-0:~/hailo-tracker/",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: clean sync and restart",
+            "detail": "\u2303\u2318\u21e7B \u2014 drop stale bytecode on the Pi, then sync and restart",
+            "type": "shell",
+            "command": "ssh pi5-0 'cd ~/hailo-tracker && find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true' && rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' --exclude='_to_delete' --exclude='.vscode' --exclude='venv' --exclude='.venv' --exclude='logs' --exclude='hailo-tracker.env' --exclude='events.db' --exclude='events.db-wal' --exclude='events.db-shm' --exclude='snapshots' --exclude='*.hef' ${workspaceFolder}/ pi5-0:~/hailo-tracker/ && ssh pi5-0 'sudo systemctl restart hailo-tracker'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: run in foreground",
+            "detail": "\u2303\u2318\u21e7R \u2014 sync, stop the service, run it here. Prefer the 'pi: run' terminal profile: Ctrl-C there reaches the SIGINT handler that flushes the event log, instead of VS Code asking to kill the task.",
+            "type": "shell",
+            "command": "rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' --exclude='_to_delete' --exclude='.vscode' --exclude='venv' --exclude='.venv' --exclude='logs' --exclude='hailo-tracker.env' --exclude='events.db' --exclude='events.db-wal' --exclude='events.db-shm' --exclude='snapshots' --exclude='*.hef' ${workspaceFolder}/ pi5-0:~/hailo-tracker/ && ssh -t pi5-0 'sudo systemctl stop hailo-tracker; cd ~/hailo-tracker && python3 hailo_tracker.py'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true,
+                "echo": false,
+                "clear": true
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: restart service",
+            "detail": "\u2303\u2318I \u2014 restart on the Pi, no sync",
+            "type": "shell",
+            "command": "ssh pi5-0 'sudo systemctl restart hailo-tracker && sleep 1 && systemctl status hailo-tracker --no-pager -l | head -20'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: stop service",
+            "detail": "\u2303\u2318X \u2014 stop the service, freeing /dev/hailo0 for a foreground run",
+            "type": "shell",
+            "command": "ssh pi5-0 'sudo systemctl stop hailo-tracker; systemctl is-active hailo-tracker || true'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: status",
+            "detail": "\u2303\u2318\u21e7U \u2014 unit status plus what the tracker thinks it is doing",
+            "type": "shell",
+            "command": "ssh pi5-0 'systemctl status hailo-tracker --no-pager -l | head -30; echo; curl -s http://localhost:8080/stats | python3 -m json.tool | head -40'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: list cameras",
+            "detail": "\u2303\u2318M \u2014 what libcamera sees, and what the tracker enumerates",
+            "type": "shell",
+            "command": "ssh pi5-0 'rpicam-vid --list-cameras; cd ~/hailo-tracker && python3 hailo_tracker.py --list-cameras'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: get events csv",
+            "detail": "\u2303\u2318L \u2014 pull the event log off the Pi into logs/",
+            "type": "shell",
+            "command": "mkdir -p ${workspaceFolder}/logs && ssh pi5-0 'curl -sS http://localhost:8080/events.csv' > ${workspaceFolder}/logs/hailo-events.csv && ls -lh ${workspaceFolder}/logs/hailo-events.csv",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: run tests (local)",
+            "detail": "\u2303\u2318T \u2014 off-device harness on this Mac: two fake cameras, fake NPU",
+            "type": "shell",
+            "command": "cd ${workspaceFolder} && ./tests/run_tests.sh",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: run tests (on the Pi)",
+            "detail": "\u2303\u2318\u21e7T \u2014 sync, then run the same harness on the Pi",
+            "type": "shell",
+            "command": "rsync -av --delete --exclude='.git' --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' --exclude='_to_delete' --exclude='.vscode' --exclude='venv' --exclude='.venv' --exclude='logs' --exclude='hailo-tracker.env' --exclude='events.db' --exclude='events.db-wal' --exclude='events.db-shm' --exclude='snapshots' --exclude='*.hef' ${workspaceFolder}/ pi5-0:~/hailo-tracker/ && ssh -t pi5-0 'cd ~/hailo-tracker && ./tests/run_tests.sh'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true,
+                "echo": false,
+                "clear": true
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "pi: open web UI",
+            "detail": "\u2303\u2318W \u2014 open the stream in a browser, address taken from ~/.ssh/config",
+            "type": "shell",
+            "command": "open \"http://$(ssh -G pi5-0 | awk '/^hostname /{print $2}'):8080\"",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}
