@@ -1,0 +1,469 @@
+# ~/.bashrc — Raspberry Pi interactive shell
+# Copyright (c) 2025 Ryan Lush <ryan.lush@gmail.com>
+# Part of hailo-tracker. Free for personal, educational, and open-source use;
+# commercial use requires written permission -- ryan.lush@gmail.com
+#
+# The Pi counterpart to bashrc.bone. Same shape, same names, same help system --
+# muscle memory carries between the boards. Everything that is not board
+# specific is identical to bashrc.bone on purpose: if you fix something in one,
+# fix it in the other.
+#
+# What differs from bashrc.bone, and only this:
+#   * the hardware section is Pi hardware (vcgencmd, pinctrl/gpiod, rpicam,
+#     /boot/firmware/config.txt, i2c-1 as the primary bus)
+#   * sysinfo reports the Pi model from the device tree
+#
+# Installed by:  ./config/install_bashrc.sh
+# Versioned at:  ~/hailo-tracker/bashrc.pi
+# Twin file:     ~/balance_bot/bashrc.bone  (the BeagleBone Blue)
+#
+# ── how the help menus work ──────────────────────────────────────────
+# bhelp and ahelp read THIS FILE, so anything you add shows up immediately.
+# Two markers, both plain comments:
+#
+#     #:: Section name              starts a section in bhelp
+#     alias foo='...'   #: what it does
+#     foo() { ... }     #: what it does
+#
+# Add an alias without a #: comment and it still works, it just will not be
+# listed. ahelp shows everything regardless, including aliases from elsewhere.
+
+# ---------------------------------------------------------------------------
+# Interactive shells only
+# ---------------------------------------------------------------------------
+case $- in
+    *i*) ;;
+      *) return ;;
+esac
+
+# Remember where this file is so bhelp can read itself even if it is sourced
+# from somewhere other than ~/.bashrc.
+BB_RC="${BASH_SOURCE[0]:-$HOME/.bashrc}"
+
+# ---------------------------------------------------------------------------
+# History
+# ---------------------------------------------------------------------------
+HISTFILE=~/.bash_history
+HISTSIZE=100000
+HISTFILESIZE=200000
+HISTCONTROL=ignoreboth
+HISTTIMEFORMAT='%Y-%m-%d %H:%M:%S  '
+shopt -s histappend
+
+# ---------------------------------------------------------------------------
+# Shell behavior
+# ---------------------------------------------------------------------------
+shopt -s checkwinsize
+shopt -s cdspell
+shopt -s globstar
+stty -ixon 2>/dev/null
+export LESS='-FRX'
+
+# ---------------------------------------------------------------------------
+# Prompt
+# ---------------------------------------------------------------------------
+# Normal:                  pi5:~/hailo-tracker$
+# Previous command failed: [1] pi5:~/hailo-tracker$
+__set_prompt() {
+    local exit_code=$?
+    history -a
+    history -n
+    local reset='\[\e[0m\]'
+    local green='\[\e[1;32m\]'
+    local red='\[\e[1;31m\]'
+    local blue='\[\e[1;34m\]'
+    if [ "$exit_code" -eq 0 ]; then
+        PS1="${green}\h${reset}:${blue}\w${reset}\\$ "
+    else
+        PS1="${red}[${exit_code}] \h:\w\\$ ${reset}"
+    fi
+    case "$TERM" in
+        xterm*|rxvt*)
+            printf '\033]0;%s@%s: %s\007' "$USER" "${HOSTNAME%%.*}" "$PWD" ;;
+    esac
+}
+PROMPT_COMMAND='__set_prompt'
+
+# ---------------------------------------------------------------------------
+# Colors
+# ---------------------------------------------------------------------------
+#:: Shell basics
+if [ -x /usr/bin/dircolors ]; then
+    if [ -r ~/.dircolors ]; then
+        eval "$(dircolors -b ~/.dircolors)"
+    else
+        eval "$(dircolors -b)"
+    fi
+    alias grep='grep --color=auto'   #: grep, always coloured
+fi
+
+# Brighter than the default, and gives archives/media/code distinct colours so
+# "sort by type" (lx) is legible at a glance instead of needing the extension
+# read off each line.
+if [ -z "${LS_COLORS:-}" ]; then
+    export LS_COLORS='di=1;34:ln=1;36:so=1;35:pi=33:ex=1;32:bd=1;33:cd=1;33:su=37;41:sg=30;43:tw=30;42:ow=34;42:\
+*.tar=1;31:*.tgz=1;31:*.zip=1;31:*.gz=1;31:*.bz2=1;31:*.xz=1;31:*.7z=1;31:\
+*.jpg=1;35:*.jpeg=1;35:*.png=1;35:*.gif=1;35:*.svg=1;35:*.mp4=1;35:*.mov=1;35:\
+*.c=1;33:*.h=1;33:*.py=1;33:*.sh=1;33:*.js=1;33:*.html=1;33:*.json=0;33:\
+*.csv=1;36:*.log=0;36:*.md=0;37:*.conf=0;32:*.service=0;32:*.dtbo=0;32:*.dts=0;32'
+fi
+export LSCOLORS='ExGxFxdaCxDaDahbadacec'
+export CLICOLOR=1
+
+#:: Listing files
+# The back end is picked ONCE and its flags stored in variables; the aliases are
+# then defined exactly once each, below. Same names on every back end, so muscle
+# memory carries between the Pi (GNU ls), the BeagleBone, and a Mac.
+_lx_fn=0
+if command -v eza >/dev/null 2>&1; then
+    _b='eza --color=auto --icons=auto --group-directories-first'
+    _lng="$_b --long --header --time-style=long-iso"
+    _l="$_b"
+    _ll="$_b --long --header --group --time-style=long-iso"
+    _la="$_ll --all"
+    _lt="$_lng --sort=modified --reverse"
+    _ltr="$_lng --sort=modified"
+    _lx="$_lng --sort=extension"
+    _lz="$_lng --sort=size --reverse"
+    _ld="$_b --long --header --only-dirs"
+    _lf="$_b --long --header --only-files"
+    _lg="$_lng --git --git-repos"
+    _lr="$_b --tree --level=2"
+elif ls --version >/dev/null 2>&1; then
+    # GNU ls: the Pi, the BeagleBone, and a Mac with coreutils.
+    _g="ls --color=auto --group-directories-first -h --time-style=long-iso"
+    _l='ls --color=auto --group-directories-first -CF'
+    _ll="$_g -lF"
+    _la="$_g -lAF"
+    _lt="$_g -lAFt"
+    _ltr="$_g -lAFtr"
+    _lx="$_g -lAFX"
+    _lz="$_g -lAFS"
+    _ld='ls --color=auto -d */'
+    _lf="$_g -lF | grep -v '^d'"
+    _lg="$_g -lF"
+    _lr='ls --color=auto -R --group-directories-first -F'
+else
+    # Stock macOS BSD ls: no directory grouping, and no -X to sort by extension.
+    _l='ls -CFG'
+    _ll='ls -lhFG'
+    _la='ls -lhAFG'
+    _lt='ls -lhAFGt'
+    _ltr='ls -lhAFGtr'
+    _lz='ls -lhAFGS'
+    _ld='ls -dG */'
+    _lf="ls -lhFG | grep -v '^d'"
+    _lg='ls -lhFG'
+    _lr='ls -RCFG'
+    _lx_fn=1        # needs a function, not an alias -- see below
+fi
+
+alias l="$_l"      #: brief, columns
+alias ll="$_ll"    #: long, human sizes, dirs first
+alias la="$_la"    #: ll plus dotfiles
+alias lt="$_lt"    #: by mtime, newest first
+alias ltr="$_ltr"  #: by mtime, newest last
+alias lz="$_lz"    #: by size, largest first
+alias ld="$_ld"    #: directories only
+alias lf="$_lf"    #: files only
+alias lg="$_lg"    #: long plus git status (needs eza)
+alias lr="$_lr"    #: recursive listing
+
+if [ "$_lx_fn" -eq 1 ]; then
+    lx() { ls -lhAF "$@" | sort -t. -k2; }   #: grouped by extension (approx)
+else
+    alias lx="$_lx"                          #: grouped by extension
+fi
+unset _b _g _lng _l _ll _la _lt _ltr _lx _lz _ld _lf _lg _lr _lx_fn
+
+lnew() {                        #: N most recently modified files, recursively
+    local n="${1:-15}"
+    if find . -maxdepth 0 -printf '' >/dev/null 2>&1; then
+        find . -type f -not -path '*/.git/*' -not -path '*/node_modules/*' \
+            -printf '%T@|%TY-%Tm-%Td %TH:%TM|%8s|%p\n' 2>/dev/null |
+            sort -rn | head -n "$n" |
+            awk -F'|' '{printf "  %s  %8s  %s\n", $2, $3, $4}'
+    else
+        find . -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -print0 2>/dev/null |
+            xargs -0 stat -f '%m|%Sm|%z|%N' -t '%Y-%m-%d %H:%M' 2>/dev/null |
+            sort -rn | head -n "$n" |
+            awk -F'|' '{printf "  %s  %8s  %s\n", $2, $3, $4}'
+    fi
+}
+
+lbig() {                        #: N largest files below here
+    # Plain 'du' here, not 'command du': find -exec runs the binary directly
+    # with no shell involved, so no alias can apply -- and 'command' is a shell
+    # builtin, so find would look for an executable of that name and silently
+    # produce nothing.
+    local n="${1:-15}"
+    find . -type f -not -path '*/.git/*' -not -path '*/node_modules/*' \
+        -exec du -h {} + 2>/dev/null | sort -rh | head -n "$n"
+}
+
+#:: Directory sizes
+# 'command du' throughout: the du alias below would otherwise be expanded into
+# these function bodies when they are DEFINED, quietly appending -h to calls
+# that already pass their own flags.
+ds() {                          #: size of each subdirectory here, largest first
+    command du -h --max-depth=1 "${1:-.}" 2>/dev/null | sort -rh ||
+        command du -h -d 1 "${1:-.}" 2>/dev/null | sort -rh
+}
+
+dsa() {                         #: like ds, including hidden directories
+    local d="${1:-.}"
+    { command du -sh "$d"/.[!.]* 2>/dev/null; command du -sh "$d"/* 2>/dev/null; } | sort -rh
+}
+
+dtop() {                        #: N biggest directories anywhere below here
+    local n="${2:-15}"
+    command du -h "${1:-.}" 2>/dev/null | sort -rh | head -n "$n"
+}
+
+dgrow() {                       #: what is filling the disk, from / downwards
+    command du -h --max-depth=1 / 2>/dev/null | sort -rh | head -20
+}
+
+alias dfree='df -h -x tmpfs -x devtmpfs'   #: real filesystems only, human sizes
+alias disk='df -h'                          #: disk free, all filesystems
+alias mem='free -h'                         #: memory use
+alias df='df -h'                            #: df, human sizes
+alias du='du -h'                            #: du, human sizes
+alias free='free -h'                        #: free, human sizes
+
+#:: Navigation
+alias ..='cd ..'         #: up one
+alias ...='cd ../..'     #: up two
+alias ....='cd ../../..' #: up three
+mkcd() { mkdir -p "$1" && cd "$1"; }   #: mkdir and cd into it
+
+#:: Git
+alias gs='git status'                            #: status
+alias gd='git diff'                              #: diff
+alias gl='git log --oneline --graph --decorate -20'  #: last 20 commits, graph
+alias gb='git branch --show-current'             #: current branch
+
+#:: Logs and units (any service)
+alias sc='systemctl'                                  #: shorthand
+alias jc='journalctl'                                 #: shorthand
+alias jcf='journalctl -f'                             #: follow the whole journal
+alias booterr='journalctl -b -p warning --no-pager'   #: this boot's warnings and errors
+j()  { journalctl -u "$1" -f; }   #: follow any unit:  j hailo-tracker
+st()  { systemctl status -n 0 --no-pager "$1"; }   #: status any unit, no log
+stl() { systemctl status -n "${2:-20}" --no-pager "$1"; }  #: status WITH log:  stl nginx 50
+
+#:: Processes
+psg()  { ps aux | grep -i -- "$1" | grep -v '[g]rep'; }   #: find a process:  psg python
+alias ports='sudo ss -lntup'   #: listening ports and what owns them
+
+#:: Raspberry Pi hardware
+# i2c-1 is the 40-pin header bus on every Pi (GPIO2/3). i2c-0 exists but is the
+# camera/HAT-ID bus and is usually not what you want; the Pi 5 also exposes more
+# buses, so i2c (i2cdetect -l) first, then scan the one it names.
+alias i2c='i2cdetect -l'            #: list i2c buses
+alias i2c0='sudo i2cdetect -y -r 0' #: scan i2c bus 0 (camera / HAT ID)
+alias i2c1='sudo i2cdetect -y -r 1' #: scan i2c bus 1 (40-pin header)
+alias spi='ls -l /dev/spidev* 2>/dev/null'   #: spi devices, if spi is enabled
+alias serial='ls -l /dev/serial* /dev/ttyAMA* /dev/ttyUSB* /dev/ttyACM* 2>/dev/null'  #: available serial ports
+alias usb='lsusb'                   #: usb devices
+alias myip='hostname -I'            #: this board's IP
+alias ip='ip -c'                    #: ip, coloured
+alias pcie='lspci'                  #: pcie devices (Pi 5: NVMe, Hailo)
+
+# pinctrl on Pi 5 / recent Bookworm, gpioinfo (libgpiod) everywhere else.
+gpio() {                            #: pin states -- all pins, or one:  gpio 17
+    if command -v pinctrl >/dev/null 2>&1; then
+        if [ -n "${1:-}" ]; then pinctrl get "$1"; else pinctrl get; fi
+    elif command -v gpioinfo >/dev/null 2>&1; then
+        gpioinfo | { [ -n "${1:-}" ] && grep -E "line +${1}:" || cat; }
+    else
+        echo "neither pinctrl nor gpioinfo is installed" >&2; return 1
+    fi
+}
+
+temps() {                           #: CPU / SoC temperatures
+    if command -v vcgencmd >/dev/null 2>&1; then
+        printf "%-20s %s\n" "soc (vcgencmd)" "$(vcgencmd measure_temp | sed 's/temp=//')"
+    fi
+    local z temp type
+    for z in /sys/class/thermal/thermal_zone*; do
+        [ -r "$z/temp" ] || continue
+        type=$(cat "$z/type" 2>/dev/null)
+        temp=$(cat "$z/temp" 2>/dev/null)
+        awk -v type="$type" -v temp="$temp" \
+            'BEGIN { printf "%-20s %5.1f C\n", type, temp / 1000 }'
+    done
+}
+
+# The single most useful Pi diagnostic there is: an under-volted or thermally
+# capped Pi looks like flaky software until you read this. Raw hex tells you
+# nothing, so decode it -- and split "now" from "since boot", because a clean
+# 'now' with dirty history means it already happened and you missed it.
+throttle() {                        #: decode vcgencmd get_throttled
+    command -v vcgencmd >/dev/null 2>&1 || { echo "vcgencmd not found" >&2; return 1; }
+    local raw v
+    raw=$(vcgencmd get_throttled)
+    v=$(( ${raw#throttled=} ))
+    echo "$raw"
+    printf '  now:\n'
+    (( v & 0x1 ))     && echo "    under-voltage"
+    (( v & 0x2 ))     && echo "    arm frequency capped"
+    (( v & 0x4 ))     && echo "    currently throttled"
+    (( v & 0x8 ))     && echo "    soft temperature limit active"
+    printf '  since boot:\n'
+    (( v & 0x10000 )) && echo "    under-voltage occurred"
+    (( v & 0x20000 )) && echo "    arm frequency capping occurred"
+    (( v & 0x40000 )) && echo "    throttling occurred"
+    (( v & 0x80000 )) && echo "    soft temperature limit occurred"
+    [ "$v" -eq 0 ] && echo "    (all clear)"
+    return 0
+}
+
+alias volts='vcgencmd measure_volts core'    #: core voltage
+alias armclk='vcgencmd measure_clock arm'    #: arm clock, Hz
+alias fw='vcgencmd version'                  #: firmware version
+alias cams='rpicam-hello --list-cameras 2>/dev/null || libcamera-hello --list-cameras'  #: cameras the stack can see
+alias vids='ls -l /dev/video* /dev/media* 2>/dev/null'   #: v4l2 / media nodes
+alias overlays='ls /boot/firmware/overlays 2>/dev/null || ls /boot/overlays'  #: available dt overlays
+# Bookworm moved the boot partition to /boot/firmware; older images use /boot.
+alias bootcfg='sudo ${EDITOR:-nano} $([ -f /boot/firmware/config.txt ] && echo /boot/firmware/config.txt || echo /boot/config.txt)'  #: edit config.txt
+alias bootcmd='cat $([ -f /boot/firmware/cmdline.txt ] && echo /boot/firmware/cmdline.txt || echo /boot/cmdline.txt)'  #: show cmdline.txt
+
+#:: Hailo NPU
+# The accelerator itself, not the app -- app control lives in
+# config/tracker_aliases.sh. hailo is the first thing to run when the tracker
+# says it cannot open the device: if fw-control cannot identify it, nothing
+# above it will work.
+alias hailo='hailortcli fw-control identify'   #: identify the NPU (firmware, serial)
+alias hailoscan='hailortcli scan'              #: enumerate hailo devices
+alias hailodev='ls -l /dev/hailo* 2>/dev/null; lsmod | grep -i hailo'  #: device node and loaded driver
+alias hailomon='hailortcli monitor'            #: live NPU utilisation
+# The PCIe driver is DKMS: a kernel update leaves the old module behind and
+# /dev/hailo0 simply does not appear. Check here first after any apt upgrade.
+alias hailodkms='dkms status | grep -i hailo'  #: DKMS module state (rebuild: sudo dkms autoinstall)
+
+#:: Kernel and debugging
+alias dm='sudo dmesg -T | tail -100'          #: last 100 kernel messages
+alias dmesgerr='sudo dmesg --level=err,warn'  #: kernel warnings and errors
+dmsg() { sudo dmesg -T | grep -i -- "$1"; }   #: search kernel messages:  dmsg i2c
+
+sysinfo() {                          #: model, host, kernel, uptime, IP, memory, disk
+    local model=""
+    [ -r /proc/device-tree/model ] && model=$(tr -d '\0' < /proc/device-tree/model)
+    [ -n "$model" ] && echo "Model:  $model"
+    echo "Host:   $(hostname)"
+    echo "Kernel: $(uname -r)"
+    echo "Uptime: $(uptime -p)"
+    echo "IP:     $(hostname -I)"
+    command -v vcgencmd >/dev/null 2>&1 &&
+        echo "Temp:   $(vcgencmd measure_temp | sed 's/temp=//')   $(vcgencmd get_throttled)"
+    echo
+    free -h
+    echo
+    df -h /
+}
+
+#:: Help
+bhelp() {                            #: this menu — all project commands, by section
+    local filter="${1:-}"
+    # Both layers: the shell file here, and the project file in the repo.
+    local files=("${BB_RC:-$HOME/.bashrc}")
+    [ -r "${BB_ALIASES:-}" ] && files+=("$BB_ALIASES")
+    [ -r "${files[0]}" ] || { echo "bhelp: cannot read ${files[0]}" >&2; return 1; }
+    # Only list what this shell actually has. The ls section defines three
+    # back ends (eza / GNU / BSD) and exactly one of them is live -- a purely
+    # static read of the file would advertise all three, including the two that
+    # do not exist here.
+    local defined
+    defined=$( { alias | sed 's/^alias //; s/=.*//'
+                 declare -F | awk '{print $3}'; } | tr '\n' ' ' )
+    awk -v filter="$filter" -v defined=" $defined " '
+        /^#:: / {
+            sec = substr($0, 5); shown = 0; next
+        }
+        {
+            p = index($0, "#:")
+            if (p == 0 || substr($0, p, 3) == "#::") next
+            doc = substr($0, p + 2)
+            sub(/^[ \t]+/, "", doc)
+            name = ""
+            if (match($0, /^[ \t]*alias [A-Za-z0-9_.:-]+=/)) {
+                name = substr($0, RSTART, RLENGTH)
+                sub(/^[ \t]*alias /, "", name); sub(/=$/, "", name)
+            } else if (match($0, /^[A-Za-z0-9_]+\(\)/)) {
+                name = substr($0, RSTART, RLENGTH); sub(/\(\)/, "", name)
+            }
+            if (name == "") next
+            if (index(defined, " " name " ") == 0) next   # not live in this shell
+            if (seen[name]++) next                        # never list a name twice
+            if (filter != "" && index(name doc, filter) == 0) next
+            if (!shown && sec != "") { printf "\n\033[1;34m%s\033[0m\n", sec; shown = 1 }
+            printf "  \033[1;32m%-11s\033[0m %s\n", name, doc
+        }
+        END { print "" }
+    ' "${files[@]}"
+}
+
+ahelp() {                            #: every alias and function defined in this shell
+    local filter="${1:-}"
+    echo
+    echo -e "\033[1;34mAliases\033[0m"
+    alias | sed 's/^alias //' |
+        awk -F= -v f="$filter" '{
+            name=$1; sub(/^[^=]*=/, "", $0); val=$0
+            gsub(/^'\''|'\''$/, "", val)
+            if (f != "" && index(name val, f) == 0) next
+            printf "  \033[1;32m%-11s\033[0m %s\n", name, val
+        }' | sort -k1
+    echo
+    echo -e "\033[1;34mFunctions\033[0m"
+    declare -F | awk '{print $3}' | grep -v '^_' |
+        awk -v f="$filter" '{ if (f != "" && index($0, f) == 0) next
+                              printf "  \033[1;32m%s\033[0m\n", $0 }' | sort
+    echo
+    echo "  bhelp            documented project commands, grouped"
+    echo "  ahelp <text>     filter, e.g.  ahelp git"
+    echo
+}
+
+#:: (end)
+
+# ---------------------------------------------------------------------------
+# Local overrides — anything machine-specific and unversioned
+# ---------------------------------------------------------------------------
+# ── project layer ────────────────────────────────────────────────────────
+# hailo-tracker's service control lives in the repo, not here: it can be edited
+# without reinstalling this file, and this file stays useful on a Pi with no
+# hailo-tracker on it. No name is defined in both; install_bashrc.sh refuses to
+# install if that ever stops being true.
+# Where the repo is, in order: an HT_DIR you exported yourself, the path
+# install_bashrc.sh recorded, then the guess. The guess is why this needs three
+# steps -- $HOME/hailo-tracker is right until the day it is not, and when it is
+# wrong nothing complains, you just get a shell with no service aliases.
+if [ -z "${HT_DIR:-}" ] && [ -r "$HOME/.config/hailo-tracker/repo_path" ]; then
+    read -r HT_DIR < "$HOME/.config/hailo-tracker/repo_path"
+fi
+HT_DIR="${HT_DIR:-$HOME/hailo-tracker}"
+BB_ALIASES="$HT_DIR/config/tracker_aliases.sh"
+[ -f "$BB_ALIASES" ] && . "$BB_ALIASES"
+
+# ── local overrides ──────────────────────────────────────────────────────
+# Sourced LAST, so anything here beats both files above. For machine-specific
+# one-offs -- not for redefining project aliases.
+[ -f ~/.bash_aliases ] && . ~/.bash_aliases
+
+# ---------------------------------------------------------------------------
+# Bash completion
+# ---------------------------------------------------------------------------
+if ! shopt -oq posix; then
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Prompt must remain last — reassert in case a sourced file changed it.
+# ---------------------------------------------------------------------------
+PROMPT_COMMAND='__set_prompt'
